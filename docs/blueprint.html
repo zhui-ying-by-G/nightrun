@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>无限隧道 · 工程蓝图 v1.1</title>
+<style>
+  :root{
+    --bg:#07080c; --bg-soft:#0b0e15; --card:#10141d; --card-2:#0d1119;
+    --line:#1b2231; --line-2:#26303f;
+    --text:#dde5f1; --dim:#8a97ac; --dim-2:#66748a;
+    --cyan:#35e0f0; --violet:#8b6cff; --amber:#ffab4d; --green:#3ddc97; --red:#ff6b6b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:24px}
+  body{
+    background:var(--bg); color:var(--text); font-size:16px; line-height:1.8;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(circle at 12% -4%, rgba(53,224,240,.07), transparent 42%),
+      radial-gradient(circle at 88% 8%, rgba(139,108,255,.07), transparent 40%);
+    background-attachment:fixed;
+  }
+  a{color:var(--cyan);text-decoration:none}
+  .layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:44px;max-width:1220px;margin:0 auto;padding:0 32px 110px}
+
+  /* 顶部进度条 */
+  #prog{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet));z-index:50;transition:width .1s linear}
+
+  /* 目录 */
+  .toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;padding:44px 0 40px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .toc::-webkit-scrollbar{width:4px}
+  .toc::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .toc-title{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim-2);margin-bottom:14px}
+  .toc a{display:block;color:var(--dim);font-size:13px;padding:5px 11px;border-left:2px solid transparent;border-radius:0 6px 6px 0;transition:.16s;line-height:1.45}
+  .toc a:hover{color:var(--text);background:rgba(255,255,255,.03)}
+  .toc a.active{color:var(--cyan);border-left-color:var(--cyan);background:rgba(53,224,240,.07)}
+  .toc .sub{font-size:11px;color:var(--dim-2);padding:2px 11px 8px 22px}
+
+  main{padding-top:44px;min-width:0;max-width:100%}
+
+  /* HERO */
+  .hero{position:relative;padding:44px 40px 40px;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    background:linear-gradient(140deg,rgba(53,224,240,.06),rgba(139,108,255,.05) 45%,transparent 70%),var(--bg-soft)}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-radial-gradient(circle at 84% 18%, rgba(255,171,77,.16) 0 1px, transparent 1px 46px);
+    mask-image:radial-gradient(circle at 84% 18%, #000 0%, transparent 62%);
+    -webkit-mask-image:radial-gradient(circle at 84% 18%, #000 0%, transparent 62%);opacity:.7}
+  .hero-tag{position:relative;display:inline-block;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);
+    border:1px solid rgba(53,224,240,.32);padding:4px 12px;border-radius:100px;margin-bottom:20px}
+  .hero h1{position:relative;font-size:clamp(34px,5.4vw,52px);line-height:1.14;letter-spacing:-.025em;font-weight:700;margin-bottom:14px;
+    background:linear-gradient(100deg,#fff 24%,var(--cyan) 92%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .sub{position:relative;color:var(--dim);font-size:16.5px;max-width:660px}
+  .hero .sub b{color:var(--text);font-weight:600}
+  .kpis{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;margin-top:30px;
+    background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .kpi{background:var(--bg-soft);padding:14px 16px}
+  .kpi b{display:block;font-size:22px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-.02em;color:#fff;line-height:1.3}
+  .kpi span{font-size:11.5px;color:var(--dim-2);letter-spacing:.04em}
+  .kpi.am b{color:var(--amber)} .kpi.cy b{color:var(--cyan)} .kpi.vi b{color:var(--violet)} .kpi.gr b{color:var(--green)}
+
+  /* 章节 */
+  section{margin-top:66px;scroll-margin-top:20px}
+  h2{display:flex;align-items:center;gap:13px;font-size:21px;font-weight:600;letter-spacing:-.01em;padding-bottom:13px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+  h2 .num{font-size:11px;font-weight:700;color:var(--cyan);background:rgba(53,224,240,.09);border:1px solid rgba(53,224,240,.22);
+    width:29px;height:29px;display:grid;place-items:center;border-radius:8px;flex:none;font-family:ui-monospace,monospace}
+  h2 .en{margin-left:auto;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim-2);font-weight:400}
+  h3{font-size:15.5px;font-weight:600;margin:26px 0 10px;color:#fff;display:flex;align-items:center;gap:9px}
+  h3::before{content:"";width:3px;height:13px;background:var(--cyan);border-radius:2px;opacity:.8}
+  p{margin-bottom:13px}
+  p.dim,li.dim{color:var(--dim)}
+  ul,ol{margin:0 0 15px;padding-left:20px}
+  li{margin-bottom:6px}
+  li::marker{color:var(--cyan)}
+  ol li::marker{color:var(--violet);font-weight:600}
+  strong{color:#fff;font-weight:600}
+  em{color:var(--green);font-style:normal}
+  .lead{font-size:17px;line-height:1.85;color:var(--text)}
+  .lead b{color:var(--cyan)}
+
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86em;background:rgba(53,224,240,.08);color:#8ee9f6;
+    padding:2px 6px;border-radius:5px;border:1px solid rgba(53,224,240,.13)}
+  pre{background:#05070c;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;overflow-x:auto;margin:0 0 16px;line-height:1.72}
+  pre code{background:none;border:none;padding:0;color:#a9bdd8;font-size:13px;white-space:pre}
+  .com{color:#4e6178} .kw{color:#c792ea} .str{color:#a5e6a0} .nul{color:#ffb86c} .fn{color:#82aaff}
+
+  /* 卡片 */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  .card h4{font-size:13.5px;font-weight:600;margin-bottom:9px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+  .card h4 .dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 9px var(--cyan);flex:none}
+  .card.amber h4{color:var(--amber)} .card.amber h4 .dot{background:var(--amber);box-shadow:0 0 9px var(--amber)}
+  .card.violet h4{color:var(--violet)} .card.violet h4 .dot{background:var(--violet);box-shadow:0 0 9px var(--violet)}
+  .card.green h4{color:var(--green)} .card.green h4 .dot{background:var(--green);box-shadow:0 0 9px var(--green)}
+  .card p,.card li{font-size:13.6px;color:var(--dim);line-height:1.7}
+  .card p:last-child,.card ul:last-child{margin-bottom:0}
+  .card ul{padding-left:16px;margin-bottom:0}
+  .card li{margin-bottom:4px}
+  .card li::marker{color:var(--violet)}
+  .card .big{display:block;font-size:26px;font-family:ui-monospace,monospace;color:#fff;margin-bottom:2px}
+
+  /* 提示 */
+  .note{border-left:3px solid var(--cyan);background:rgba(53,224,240,.05);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:16px 0;font-size:14px;color:var(--dim)}
+  .note b{color:var(--text)}
+  .note.warn{border-left-color:var(--amber);background:rgba(255,171,77,.055)}
+  .note.good{border-left-color:var(--green);background:rgba(61,220,151,.05)}
+  .note.bad{border-left-color:var(--red);background:rgba(255,107,107,.05)}
+  .note p:last-child{margin-bottom:0}
+
+  /* 表格 */
+  .tw{overflow-x:auto;margin-bottom:16px;border:1px solid var(--line);border-radius:var(--radius)}
+  table{width:100%;border-collapse:collapse;font-size:13.8px;min-width:520px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim-2);font-weight:600;background:rgba(255,255,255,.02)}
+  td:first-child{color:#fff;font-weight:500;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(255,255,255,.018)}
+  td code{white-space:nowrap}
+  .mono{font-family:ui-monospace,monospace;font-size:12.5px}
+
+  /* 步骤 */
+  .steps{counter-reset:st;list-style:none;padding:0;margin-bottom:0}
+  .steps>li{counter-increment:st;position:relative;padding:0 0 20px 44px;border-left:1px solid var(--line);margin-left:13px}
+  .steps>li:last-child{border-left-color:transparent;padding-bottom:0}
+  .steps>li::before{content:counter(st);position:absolute;left:-14px;top:0;width:28px;height:28px;border-radius:50%;background:var(--bg-soft);
+    border:1px solid var(--cyan);color:var(--cyan);display:grid;place-items:center;font-size:12px;font-weight:700;font-family:ui-monospace,monospace}
+  .steps>li strong{display:block;margin-bottom:4px;color:#fff;font-size:14.5px}
+  .steps>li p{color:var(--dim);font-size:13.8px;margin:0}
+
+  .summary{background:linear-gradient(135deg,rgba(53,224,240,.07),rgba(139,108,255,.07));border:1px solid rgba(53,224,240,.2);
+    border-radius:var(--radius);padding:22px 24px;font-size:16px;line-height:1.9}
+  .summary b{color:var(--cyan)}
+
+  footer{margin-top:64px;padding-top:22px;border-top:1px solid var(--line);color:var(--dim-2);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  /* ============ 样机 ============ */
+  .demo{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#000}
+  .stage{position:relative;width:100%;aspect-ratio:16/9;background:#05070b}
+  #tunnel{display:block;width:100%;height:100%}
+  .stage::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 46%, transparent 38%, rgba(0,0,0,.55) 100%)}
+  .hud{position:absolute;left:14px;top:12px;font-family:ui-monospace,monospace;font-size:11px;color:rgba(210,225,240,.62);
+    letter-spacing:.06em;text-shadow:0 1px 8px #000;pointer-events:none;line-height:1.7;z-index:2}
+  .hud b{color:#fff;font-weight:500}
+  .hud2{position:absolute;right:14px;top:12px;font-family:ui-monospace,monospace;font-size:11px;color:rgba(210,225,240,.5);
+    text-align:right;text-shadow:0 1px 8px #000;pointer-events:none;line-height:1.7;z-index:2}
+  .hud2 b{color:var(--green);font-weight:500}
+  .loopbar{position:absolute;left:14px;right:14px;bottom:12px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;z-index:2;pointer-events:none}
+  .loopbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),#fff2dc);border-radius:2px;box-shadow:0 0 8px rgba(255,171,77,.8)}
+  .loopbar u{position:absolute;left:0;top:-3px;width:1px;height:8px;background:rgba(255,255,255,.55)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;background:var(--bg-soft);border-top:1px solid var(--line)}
+  .seg{display:flex;gap:4px;background:#0a0d14;border:1px solid var(--line);border-radius:9px;padding:3px}
+  .seg button{appearance:none;border:none;background:transparent;color:var(--dim);font:inherit;font-size:12.5px;padding:5px 11px;border-radius:6px;cursor:pointer;transition:.15s}
+  .seg button:hover{color:var(--text)}
+  .seg button.on{background:rgba(53,224,240,.14);color:var(--cyan);box-shadow:inset 0 0 0 1px rgba(53,224,240,.25)}
+  .ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim-2);font-family:ui-monospace,monospace}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:118px;height:3px;background:#1e2635;border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 10px rgba(53,224,240,.6)}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border:none;border-radius:50%;background:var(--cyan);cursor:pointer}
+  .btn{appearance:none;border:1px solid var(--line);background:#0a0d14;color:var(--dim);font:inherit;font-size:12.5px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+  .btn:hover{color:#fff;border-color:var(--line-2)}
+  .btn.warm{color:var(--amber);border-color:rgba(255,171,77,.28)}
+  .cap{font-size:12.8px;color:var(--dim-2);margin-top:9px;line-height:1.7}
+  .cap b{color:var(--dim)}
+
+  /* 架构图 */
+  .arch{margin:6px 0 18px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:13px}
+  .arch .layer{display:grid;grid-template-columns:132px 1fr;border-bottom:1px solid var(--line);background:var(--card)}
+  .arch .layer:last-child{border-bottom:none}
+  .arch .lg{padding:12px 14px;background:rgba(255,255,255,.025);border-right:1px solid var(--line);font-family:ui-monospace,monospace;font-size:11.5px;color:var(--dim-2);display:flex;flex-direction:column;justify-content:center;gap:2px}
+  .arch .lg b{color:#fff;font-weight:600;font-size:12.5px;letter-spacing:.02em}
+  .arch .mods{padding:12px 14px;display:flex;flex-wrap:wrap;gap:6px;align-content:center}
+  .arch .m{background:#0a0e16;border:1px solid var(--line);border-radius:7px;padding:3px 9px;color:var(--dim);font-size:12px;font-family:ui-monospace,monospace}
+  .arch .m.hi{border-color:rgba(53,224,240,.3);color:var(--cyan);background:rgba(53,224,240,.06)}
+  .arch .m.am{border-color:rgba(255,171,77,.28);color:var(--amber);background:rgba(255,171,77,.05)}
+  .arch .m.vi{border-color:rgba(139,108,255,.28);color:#b9a5ff;background:rgba(139,108,255,.05)}
+
+  /* 目录树 */
+  .tree{background:#05070c;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;overflow-x:auto;margin-bottom:14px}
+  .tree pre{background:none;border:none;padding:0;margin:0;font-size:12.6px;line-height:1.85}
+  .tree .d{color:#7fd6e6} .tree .f{color:#c8d4e4} .tree .c{color:#465a72}
+
+  /* 里程碑 */
+  .mile{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:12px;margin-bottom:16px}
+  .ms{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+  .ms::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--line-2)}
+  .ms.g1::before{background:var(--cyan)} .ms.g2::before{background:var(--green)} .ms.g3::before{background:var(--amber)} .ms.g4::before{background:var(--violet)}
+  .ms i{font-family:ui-monospace,monospace;font-size:11px;color:var(--dim-2);letter-spacing:.1em;font-style:normal}
+  .ms b{display:block;font-size:14.5px;color:#fff;margin:3px 0 6px;font-weight:600}
+  .ms span{font-size:12.5px;color:var(--dim);line-height:1.65;display:block}
+  .ms .gate{margin-top:8px;font-size:11.5px;color:var(--amber);border-top:1px dashed var(--line);padding-top:7px;display:block;line-height:1.6}
+
+  .chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:4px;font-family:ui-monospace,monospace;letter-spacing:.03em;white-space:nowrap}
+  .chip.hi{background:rgba(255,107,107,.12);color:#ff8d8d;border:1px solid rgba(255,107,107,.25)}
+  .chip.md{background:rgba(255,171,77,.1);color:var(--amber);border:1px solid rgba(255,171,77,.22)}
+  .chip.lo{background:rgba(61,220,151,.1);color:var(--green);border:1px solid rgba(61,220,151,.22)}
+
+  .check{list-style:none;padding:0;margin:0}
+  .check li{position:relative;padding-left:26px;margin-bottom:8px;font-size:14px;color:var(--dim)}
+  .check li::before{content:"";position:absolute;left:0;top:7px;width:13px;height:13px;border:1px solid var(--line-2);border-radius:4px;background:#0a0e16}
+  .check li b{color:var(--text)}
+
+  @media (max-width:980px){
+    .layout{grid-template-columns:minmax(0,1fr);gap:0;padding:0 18px 80px}
+    .toc{position:static;max-height:none;padding:22px 0 0;border-bottom:1px solid var(--line);margin-bottom:6px}
+    .toc-links{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:14px}
+    .toc a{border-left:none;border:1px solid var(--line);border-radius:100px;padding:4px 10px;font-size:12px}
+    .toc .sub{display:none}
+    main{padding-top:16px}
+    .hero{padding:30px 22px;overflow:hidden}
+    section{margin-top:48px}
+    .arch .layer{grid-template-columns:1fr}
+    .arch .lg{border-right:none;border-bottom:1px solid var(--line);flex-direction:row;gap:8px;align-items:center}
+  }
+  @media (max-width:560px){
+    body{font-size:15px}
+    h2{font-size:18.5px} h2 .en{display:none}
+    .kpis{grid-template-columns:1fr 1fr}
+    pre code{font-size:12px}
+    .controls{padding:10px}
+    input[type=range]{width:82px}
+  }
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  @media print{
+    body{background:#fff;color:#111}.toc,#prog{display:none}.layout{grid-template-columns:1fr}
+    .hero,.card,.note,.summary,.tree,.arch,.ms{border-color:#ccc;background:#fafafa}
+    .hero h1{color:#111;-webkit-text-fill-color:#111}
+  }
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="layout">
+
+<nav class="toc">
+  <div class="toc-title">Blueprint</div>
+  <div class="toc-links">
+    <a href="#s1">样机 · 先看结果</a>
+    <a href="#s2">一页纸</a>
+    <a href="#s3">美术圣经</a>
+    <a href="#s4">体验规格</a>
+    <a href="#s5">系统架构</a>
+    <a href="#s6">工程目录</a>
+    <a href="#s7">数据契约</a>
+    <a href="#s8">运行时管线</a>
+    <a href="#s9">关键算法</a>
+    <a href="#s10">内容管线</a>
+    <a href="#s11">平台与分发</a>
+    <a href="#s12">性能预算</a>
+    <a href="#s13">里程碑与判死门</a>
+    <a href="#s14">风险矩阵</a>
+    <a href="#s15">验收清单</a>
+    <a href="#s16">路线图</a>
+    <a href="#s17">附录</a>
+  </div>
+</nav>
+
+<main>
+
+<header class="hero">
+  <div class="hero-tag">Project Blueprint · v1.1 · M0 可运行</div>
+  <h1>无限隧道</h1>
+  <p class="sub">
+    一条数学闭合的隧道，一个不需要骨骼动画的滑手，一套可以一直往下出的预设。
+    v0.1 是一个构想；这一版把它拆成<b>能施工的工程</b>：目录、数据契约、帧预算、里程碑和判死门。
+  </p>
+  <div class="kpis">
+    <div class="kpi am"><b>295<span style="font-size:12px"> m</span></b><span>闭环周长</span></div>
+    <div class="kpi cy"><b>32.8<span style="font-size:12px"> s</span></b><span>一圈 @9m/s</span></div>
+    <div class="kpi vi"><b>3</b><span>隧道预设</span></div>
+    <div class="kpi gr"><b>0</b><span>可见接缝</span></div>
+  </div>
+</header>
+
+<!-- ================= 01 样机 ================= -->
+<section id="s1">
+  <h2><span class="num">01</span>样机 · 先看结果<span class="en">Live Prototype</span></h2>
+
+  <p class="lead">下面这一帧是<b>可直接运行</b>的 2D Canvas 样机，不到 600 行，零依赖。它不负责证明 Three.js 能跑，它只负责证明三件事：<b>构图成立、速度舒适、循环看不见</b>。</p>
+
+  <div class="demo">
+    <div class="stage">
+      <canvas id="tunnel"></canvas>
+      <div class="hud">
+        <div><b id="hudPreset">钠灯山体隧道</b></div>
+        <div id="hudInfo">loop 295m · spacing 9.0m</div>
+      </div>
+      <div class="hud2">
+        <div><b id="hudFps">--</b> fps</div>
+        <div id="hudSpeed">9.0 m/s</div>
+      </div>
+      <div class="loopbar"><i id="loopFill"></i><u></u></div>
+    </div>
+    <div class="controls">
+      <div class="seg" id="presetSeg">
+        <button data-p="sodium" class="on">钠灯</button>
+        <button data-p="cold">冷白</button>
+        <button data-p="neon">霓虹</button>
+      </div>
+      <div class="seg" id="camSeg">
+        <button data-c="back34" class="on">侧后</button>
+        <button data-c="low">贴板</button>
+        <button data-c="far">远景</button>
+      </div>
+      <label class="ctl">速度 <input type="range" id="spd" min="5" max="14" step="0.5" value="9"><span id="spdV">9.0</span></label>
+      <button class="btn" id="pause">暂停</button>
+      <button class="btn warm" id="jump">跳到接缝</button>
+    </div>
+  </div>
+  <p class="cap">
+    <b>怎么读这一帧：</b>发光拱肋每 9m 一道，是隧道里的钠灯灯带；它们沿闭合曲线退向消失点，所以「永远向前」不需要长度，只需要闭合。
+    点「跳到接缝」会直接跳到环的接缝处——你能看见它被一次过曝光吃掉。这就是正式版隐藏接缝的手法。
+  </p>
+
+  <div class="note">
+    <p><b>样机与正式版的关系：</b>取景、光比、循环逻辑、预设字段完全一致；差别只在渲染器。样机用线条光（零依赖、可截图自检），正式版换成 Three.js 的马蹄形管壁、湿路面材质与体积雾。换句话说，<b>这一页的代码就是产品原型，也是数据契约的活文档</b>。</p>
+  </div>
+</section>
+
+<!-- ================= 02 一页纸 ================= -->
+<section id="s2">
+  <h2><span class="num">02</span>一页纸<span class="en">One Pager</span></h2>
+
+  <div class="summary">
+    把一条<b>闭合的 3D 曲线</b>当轨道，把一个<b>剪影滑手</b>绑在曲线上，把<b>灯光、雾、机位</b>做成可组合的预设——
+    产物不是一个视频，而是一台<b>会一直往前开的机器</b>。换隧道只换数据，换角色只换一个轮廓。
+  </div>
+
+  <h3>三个判断（它们决定了后面所有取舍）</h3>
+  <div class="cards">
+    <div class="card amber">
+      <h4><span class="dot"></span>01 · 无限由闭环保证</h4>
+      <p>不由素材长度保证。295 m 的路径首尾相接，几何、纹理、灯光三相同周期，于是「永远向前」是一个数学事实，不是一个剪辑技巧。</p>
+      <p class="mono" style="color:var(--dim-2);margin-top:8px">→ 内存恒定，帧率恒定，可跑八小时</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>02 · 情绪由光和剪影承担</h4>
+      <p>不由模型精度承担。人物亮度压到 8% 以下，只需要一个可信的轮廓和重心；代价是省掉整套骨骼绑定、动画资产与版权谈判。</p>
+      <p class="mono" style="color:var(--dim-2);margin-top:8px">→ 角色成本从「两周一个」降到「半天一个」</p>
+    </div>
+    <div class="card violet">
+      <h4><span class="dot"></span>03 · 靠「每圈 1% 的不同」留住人</h4>
+      <p>不由首帧惊艳承担。壁纸要被看几个月，不是三十秒。第 N 圈墙上多一道门、远处多一辆车，成本几乎为零，感知价值最高。</p>
+      <p class="mono" style="color:var(--dim-2);margin-top:8px">→ 这是唯一能让人「留着不换」的理由</p>
+    </div>
+  </div>
+
+  <h3>不做什么（v1 的边界，写死，防止范围失控）</h3>
+  <ul>
+    <li><strong>不做叙事解谜。</strong>没有目标、没有关卡、没有失败。桌面不需要第二个游戏。</li>
+    <li><strong>不做操作玩法。</strong>默认零交互；可选的三件交互全部默认关闭。</li>
+    <li><strong>不做角色商城。</strong>角色是轮廓，不是商品。v1 只做两套剪影。</li>
+    <li><strong>不做在线加载。</strong>所有资源本地化、相对路径、可离线运行——这是 Lively 环境的硬约束。</li>
+    <li><strong>不做真实运动模糊。</strong>用「拉长的灯光」表达速度，比后处理便宜且更干净。</li>
+  </ul>
+
+  <div class="note good">
+    <p><b>产品定位一句话：</b>不是「一段能动的壁纸」，是「一个可以一直挂着、并且会慢慢变的隧道」。前者卖一次，后者能卖一年。</p>
+  </div>
+</section>
+
+<!-- ================= 03 美术圣经 ================= -->
+<section id="s3">
+  <h2><span class="num">03</span>美术圣经<span class="en">Art Bible</span></h2>
+
+  <p class="lead">壁纸是被看的，不是被玩的。所以第一个要定死的不是代码，是<b>三张锚定帧</b>——所有实现都要能复现这三张。</p>
+
+  <div class="cards">
+    <div class="card amber">
+      <h4><span class="dot"></span>锚定帧 A · 入弯</h4>
+      <p>灯带从左上斜切进来，弯心在左。滑手贴在路面上，重心压向内侧，板底反出一条冷光。画面几乎全黑，只有三道亮线：灯带、路缘、板底。</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>锚定帧 B · 出洞口</h4>
+      <p>0.4 秒过曝。白光从消失点漫过来，吃掉整张画面，只留一个更黑的剪影。接缝就是在这里被抹掉的——观众以为是被光晃了一下。</p>
+    </div>
+    <div class="card violet">
+      <h4><span class="dot"></span>锚定帧 C · 长直道</h4>
+      <p>灯距被拉开，两道灯带退成平行线。滑手成为画面里唯一的黑色形状，速度感全靠灯带掠过眼睛的频率。</p>
+    </div>
+  </div>
+
+  <h3>硬约束（可量化，可验收）</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>维度</th><th>规则</th><th>数值 / 做法</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td>光源</td><td>全场景 ≤ 3 类</td><td>顶灯带 + 洞口天光 + 板底冷光</td><td>第四种光就会开始「假」</td></tr>
+        <tr><td>主色温</td><td>≤ 2 个</td><td>钠灯 2100K / 天光 6500K，比例 8:2</td><td>冷暖对撞出空间，多了就脏</td></tr>
+        <tr><td>人物亮度</td><td>≤ 8%</td><td>剪影 RGB ≤ <code>#141414</code>，仅留 1 px 边缘光</td><td>剪影一灰，就像贴纸</td></tr>
+        <tr><td>墙面细节</td><td>低频</td><td>纹理周期 ≥ 2 m，禁止高频噪点</td><td>远看会糊成噪点，且抢图标</td></tr>
+        <tr><td>雾</td><td>45 m 见底</td><td>透过率 0.15，远端溶进天光而非黑色</td><td>黑洞会显得画面「塌了」</td></tr>
+        <tr><td>构图</td><td>人物锚点</td><td>脚点 <code>0.56W / 0.80H</code>，消失点在 <code>0.46W / 0.42H</code></td><td>偏一点就变成「游戏截图」</td></tr>
+        <tr><td>屏幕中心</td><td>压暗</td><td>中心 40% 区域平均亮度 ≤ 22%</td><td>桌面图标要能被看见</td></tr>
+        <tr><td>质感</td><td>胶片感</td><td>颗粒 0.010 + 暗角 0.42 + 轻微色差 0.5px</td><td>抗色带，去 CG 味</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>三套预设的色板</h3>
+  <div class="cards">
+    <div class="card amber">
+      <h4><span class="dot"></span>sodium · 钠灯山体隧道</h4>
+      <div style="display:flex;gap:6px;margin:8px 0 10px">
+        <span style="width:26px;height:26px;border-radius:6px;background:#ffab4d;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#3a2b1a;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#16140f;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#05070b;border:1px solid #2a2a2a"></span>
+      </div>
+      <p>主色 <code>#ffab4d</code>，凌晨四点、湿沥青、钠灯的橙。默认预设。</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>cold · 冷白工业管廊</h4>
+      <div style="display:flex;gap:6px;margin:8px 0 10px">
+        <span style="width:26px;height:26px;border-radius:6px;background:#d6e9ff;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#26303a;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#14181c;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#04060a;border:1px solid #2a2a2a"></span>
+      </div>
+      <p>主色 <code>#d6e9ff</code>，隧道养护作业的灯，灯距更密、节奏更硬。</p>
+    </div>
+    <div class="card violet">
+      <h4><span class="dot"></span>neon · 霓虹下穿道</h4>
+      <div style="display:flex;gap:6px;margin:8px 0 10px">
+        <span style="width:26px;height:26px;border-radius:6px;background:#3fe3ff;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#232848;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#111426;border:1px solid #2a2a2a"></span>
+        <span style="width:26px;height:26px;border-radius:6px;background:#020308;border:1px solid #2a2a2a"></span>
+      </div>
+      <p>主色 <code>#3fe3ff</code>，城市下穿道 + 广告灯箱，给「夜班人群」的那一套。</p>
+    </div>
+  </div>
+
+  <h3>五条禁令</h3>
+  <ul>
+    <li><strong>不许速度线。</strong>线条会暴露「这是特效」。速度用灯带的掠过频率表达。</li>
+    <li><strong>不许镜头抖动。</strong>这是壁纸，抖动会让人晕，且八小时后是折磨。</li>
+    <li><strong>不许 FOV 呼吸。</strong>视场角是世界观，不是情绪工具。</li>
+    <li><strong>不许常驻 UI。</strong>任何文字、按钮、水印默认不出现。</li>
+    <li><strong>不许真实运动模糊。</strong>代价高、效果脏，不如把灯拉长。</li>
+  </ul>
+</section>
+
+<!-- ================= 04 体验规格 ================= -->
+<section id="s4">
+  <h2><span class="num">04</span>体验规格<span class="en">Experience Spec</span></h2>
+
+  <p class="lead">壁纸的时间尺度和短片不同：短片是 90 秒，壁纸是<b>八小时</b>。所以循环必须分三层：看得见的、感觉得到的、说不出来的。</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>层</th><th>周期</th><th>改什么</th><th>目的</th></tr></thead>
+      <tbody>
+        <tr><td>主环</td><td>32.8 s</td><td>位置 <code>s</code> 走完 295 m，回到原点</td><td>「一直在动」，不被察觉的重复</td></tr>
+        <tr><td>大周期</td><td>18 min</td><td>色温 ±400 K、雾密度 ±15%、灯带相位漂移 ±1.5 m</td><td>「好像不一样了」，但说不出哪里</td></tr>
+        <tr><td>极慢漂移</td><td>8 h</td><td>只改一个参数：天光颜色从夜到晨</td><td>挂一整天的人，傍晚会发现「天亮了」</td></tr>
+        <tr><td>微事件</td><td>3–7 min</td><td>远处车灯 0.8 s / 墙上一道涂鸦 / 一只飞虫 / 通风机低频</td><td>「它在发生什么事」的钩子</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">
+    <p><b>首次 90 秒规则：</b>启动后 90 秒内必须出现至少一次能被明确注意到的变化（一次过曝出洞、一辆对向车灯）。否则用户会怀疑壁纸卡住了，然后关掉它。</p>
+  </div>
+
+  <h3>交互边界</h3>
+  <ul>
+    <li><strong>默认零交互。</strong>移动鼠标、点击画面，什么都不发生——这是壁纸的礼貌。</li>
+    <li><strong>可选三件</strong>（设置里默认关闭）：双击暂停 / 滚轮调速 / 长按显示小时钟。</li>
+    <li><strong>暂停时必须是一张好静帧。</strong>静止状态会被截图，也会被当成「桌面背景」用。</li>
+    <li><strong>切换预设 &lt; 1 s</strong>，且不重建整条曲线（只换材质与灯光参数，必要时换路径）。</li>
+  </ul>
+
+  <h3>桌面可读性预算</h3>
+  <p class="dim">这不是审美问题，是可用性问题。把壁纸放在 20 个 32 px 图标后面，仍然要能一眼找到图标。</p>
+  <ul>
+    <li>中心 40% 区域平均亮度 ≤ 22%，对比度 ≤ 2.5:1。</li>
+    <li>高光只允许出现在消失点与灯带上，不落在图标区。</li>
+    <li>提供「省电模式」：亮度 −30%，灯带减半，帧率降到 20。</li>
+  </ul>
+</section>
+
+<!-- ================= 05 系统架构 ================= -->
+<section id="s5">
+  <h2><span class="num">05</span>系统架构<span class="en">Architecture</span></h2>
+
+  <p class="lead">五层，依赖单向向下。关键约束：<b>场景层不认识 DOM，核心层不知道 Lively 的存在</b>。这样同一份代码才能在浏览器、Lively、Wallpaper Engine 三个宿主里跑。</p>
+
+  <div class="arch">
+    <div class="layer">
+      <div class="lg"><b>L4 平台</b><span>platform/*</span></div>
+      <div class="mods">
+        <span class="m am">lively.js</span><span class="m am">wallpaper-engine.js</span><span class="m am">browser.js</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lg"><b>L3 壳层</b><span>ui/* · app.js</span></div>
+      <div class="mods">
+        <span class="m">bootstrap</span><span class="m">settings</span><span class="m">lifecycle</span><span class="m">hud (debug)</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lg"><b>L2 场景</b><span>scene/*</span></div>
+      <div class="mods">
+        <span class="m hi">tunnel</span><span class="m hi">rider</span><span class="m hi">camera</span><span class="m">lights</span><span class="m">atmosphere</span><span class="m">events</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lg"><b>L1 核心</b><span>core/*</span></div>
+      <div class="mods">
+        <span class="m vi">loop</span><span class="m vi">frames</span><span class="m vi">tube</span><span class="m vi">projection</span><span class="m vi">budget</span><span class="m vi">rng</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="lg"><b>L0 数据</b><span>presets/* · assets/*</span></div>
+      <div class="mods">
+        <span class="m">tunnel.*.json</span><span class="m">rider.*.json</span><span class="m">event.*.json</span><span class="m">wall_noise.png</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>模块职责与体积预算</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>模块</th><th>只做一件事</th><th>行数预算</th><th>禁止</th></tr></thead>
+      <tbody>
+        <tr><td><code>core/loop</code></td><td>闭合曲线 + 弧长表 + 任意 s 取点/切线</td><td>≤ 120</td><td>禁止碰材质</td></tr>
+        <tr><td><code>core/frames</code></td><td>重力对齐标架，退化保护</td><td>≤ 60</td><td>禁止引入 RMF（v1）</td></tr>
+        <tr><td><code>core/tube</code></td><td>截面函数 → 环形/实例化几何</td><td>≤ 180</td><td>禁止读预设</td></tr>
+        <tr><td><code>core/camera</code></td><td>三种机位、阻尼、弯道 roll</td><td>≤ 110</td><td>禁止写 DOM</td></tr>
+        <tr><td><code>core/budget</code></td><td>帧时采样与降级阶梯</td><td>≤ 90</td><td>禁止改用户设置</td></tr>
+        <tr><td><code>core/rng</code></td><td>种子随机，保证每圈装饰一致</td><td>≤ 30</td><td>禁止 <code>Math.random</code></td></tr>
+        <tr><td><code>scene/rider</code></td><td>程序化姿态 + 弯道侧倾</td><td>≤ 160</td><td>禁止骨骼动画（v1）</td></tr>
+        <tr><td><code>scene/events</code></td><td>微事件时间轴与触发</td><td>≤ 140</td><td>禁止阻塞主循环</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <p><b>为什么标架不用 RMF：</b>旋转最小化标架（RMF）在数学上更漂亮，但相机和路面会跟着管子一起滚——壁纸里滚镜头等于劝退。v1 用<b>重力对齐标架</b>（世界向上剔除切向分量），路永远是路面，镜头永远不歪。RMF 留给 v2 的海底/太空管。</p>
+  </div>
+</section>
+
+<!-- ================= 06 工程目录 ================= -->
+<section id="s6">
+  <h2><span class="num">06</span>工程目录<span class="en">Repository</span></h2>
+
+  <p class="lead">可以直接照这个建仓。文件数克制在 30 个以内，每个文件只负责一件事——这是能在两周内独立完成的规模。</p>
+
+  <div class="tree">
+<pre><span class="d">infinite-tunnel/</span>
+├─ <span class="f">index.html</span>              <span class="c"># 壳：canvas + 预载提示，≤ 6 KB</span>
+├─ <span class="f">app.js</span>                  <span class="c"># 装配与启动，≤ 4 KB</span>
+├─ <span class="d">core/</span>
+│  ├─ <span class="f">loop.js</span>              <span class="c"># 闭合曲线 + 弧长表</span>
+│  ├─ <span class="f">frames.js</span>            <span class="c"># 重力对齐标架</span>
+│  ├─ <span class="f">tube.js</span>              <span class="c"># 马蹄形截面 → 环形几何（InstancedMesh）</span>
+│  ├─ <span class="f">camera.js</span>            <span class="c"># 三种机位 + 阻尼</span>
+│  ├─ <span class="f">budget.js</span>            <span class="c"># 帧预算与降级阶梯</span>
+│  └─ <span class="f">rng.js</span>               <span class="c"># 确定性随机</span>
+├─ <span class="d">scene/</span>
+│  ├─ <span class="f">tunnel.js</span>            <span class="c"># 管壁、路面、标线、灯带</span>
+│  ├─ <span class="f">rider.js</span>             <span class="c"># 剪影 + 程序化姿态</span>
+│  ├─ <span class="f">lights.js</span>            <span class="c"># 灯带光、洞口天光、板底光</span>
+│  ├─ <span class="f">atmosphere.js</span>        <span class="c"># 体积雾、尘、颗粒</span>
+│  └─ <span class="f">events.js</span>            <span class="c"># 微事件时间轴</span>
+├─ <span class="d">ui/</span>
+│  ├─ <span class="f">panel.js</span>             <span class="c"># 设置面板（键盘 F2 呼出）</span>
+│  └─ <span class="f">hud.js</span>               <span class="c"># debug=1 时显示帧时/预算</span>
+├─ <span class="d">platform/</span>
+│  ├─ <span class="f">lively.js</span>            <span class="c"># livelyWallpaperPaused / Resumed</span>
+│  ├─ <span class="f">wallpaper-engine.js</span>  <span class="c"># WE 的暂停与音频事件</span>
+│  └─ <span class="f">browser.js</span>           <span class="c"># ?preset=&amp;t=&amp;debug=1</span>
+├─ <span class="d">presets/</span>
+│  ├─ <span class="f">tunnel.sodium-mountain.json</span>
+│  ├─ <span class="f">tunnel.cold-utility.json</span>
+│  ├─ <span class="f">tunnel.neon-underpass.json</span>
+│  ├─ <span class="f">rider.silhouette-a.json</span>
+│  └─ <span class="f">event.drift.json</span>
+├─ <span class="d">assets/</span>
+│  ├─ <span class="d">models/</span><span class="f">rider_silhouette.glb</span>   <span class="c"># ≤ 400 KB，单网格</span>
+│  ├─ <span class="d">textures/</span><span class="f">wall_noise_512.png</span>    <span class="c"># ≤ 180 KB，可平铺</span>
+│  └─ <span class="d">audio/</span>                  <span class="c"># v1 空着，v1.2 再放</span>
+├─ <span class="d">build/</span>
+│  ├─ <span class="f">bundle.mjs</span>          <span class="c"># 打成单文件 classic script</span>
+│  ├─ <span class="f">make-thumb.mjs</span>      <span class="c"># 自动抓 t=0.2 帧出缩略图</span>
+│  └─ <span class="f">verify.mjs</span>          <span class="c"># 曲线闭合/曲率/帧预算回归</span>
+├─ <span class="f">LivelyInfo.json</span>
+├─ <span class="f">project.json</span>            <span class="c"># Wallpaper Engine</span>
+└─ <span class="d">dist/</span>                   <span class="c"># 构建产物：单文件 + 缩略图</span></pre>
+  </div>
+
+  <h3>构建产物（交付形态）</h3>
+  <div class="cards">
+    <div class="card">
+      <h4><span class="dot"></span>dist/index.html</h4>
+      <p>单文件：内联 CSS/JS、模型转 base64、config 打成常量。目标 ≤ 2.2 MB，冷启动 ≤ 1.5 s。</p>
+      <p class="mono" style="color:var(--dim-2)">为什么单文件：file:// 下的 module / fetch 会被拦</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>LivelyInfo.json</h4>
+      <p><code>Type: 1</code>，<code>Arguments: --pause-event true</code>，缩略图与预览共用 <code>thumbnail.jpg</code>。</p>
+      <p class="mono" style="color:var(--dim-2)">你现有的 巨映山河 就是这个结构，直接复用</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>project.json</h4>
+      <p>Wallpaper Engine 的 web 类型工程：<code>type: "web"</code>，<code>file: "index.html"</code>，同一份 dist 直接打包。</p>
+      <p class="mono" style="color:var(--dim-2)">一份代码，两个商店</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 07 数据契约 ================= -->
+<section id="s7">
+  <h2><span class="num">07</span>数据契约<span class="en">Data Contract</span></h2>
+
+  <p class="lead">整个项目只有一个原则：<b>所有会变的东西都进 JSON，所有不会变的东西才写进代码</b>。这样「换一套隧道」是编辑数据，不是改程序；也才能让非程序员参与内容生产。</p>
+
+  <h3>tunnel.&lt;主题&gt;.json</h3>
+  <pre><code>{
+  <span class="str">"schema"</span>: 1,                          <span class="com">// 契约版本，读到不认识的版本就降级到默认值</span>
+  <span class="str">"id"</span>: <span class="str">"sodium-mountain"</span>,
+  <span class="str">"name"</span>: <span class="str">"钠灯山体隧道"</span>,
+
+  <span class="str">"loop"</span>: {                            <span class="com">// 中心线：Fourier 级数，天然闭合、天然 C∞</span>
+    <span class="str">"type"</span>: <span class="str">"fourier"</span>,
+    <span class="str">"coef"</span>: [<span class="nul">43.61</span>, <span class="nul">12.20</span>, <span class="nul">45.45</span>, <span class="nul">6.54</span>, <span class="nul">1.90</span>, <span class="nul">1.29</span>],
+    <span class="str">"phase"</span>: [<span class="nul">4.1085</span>, <span class="nul">4.1083</span>, <span class="nul">4.2432</span>, <span class="nul">2.8956</span>],
+    <span class="str">"length"</span>: <span class="nul">295.0</span>,                   <span class="com">// 构建期算出并写入，运行时校验偏差 &lt; 0.5 m</span>
+    <span class="str">"minRadius"</span>: <span class="nul">19.4</span>                 <span class="com">// 曲率半径下限，必须 &gt; 管半径 × 1.5</span>
+  },
+
+  <span class="str">"section"</span>: {                         <span class="com">// 马蹄形截面：拱 + 平地面</span>
+    <span class="str">"radius"</span>: <span class="nul">3.15</span>,
+    <span class="str">"floorRatio"</span>: <span class="nul">0.585</span>,             <span class="com">// 地面高度 / 半径</span>
+    <span class="str">"segments"</span>: <span class="nul">64</span>,
+    <span class="str">"ribSpacing"</span>: <span class="nul">9.0</span>                <span class="com">// 拱肋 / 灯带间距（米）</span>
+  },
+
+  <span class="str">"lighting"</span>: {
+    <span class="str">"ribColor"</span>: <span class="str">"#ffab4d"</span>,
+    <span class="str">"ambient"</span>: <span class="str">"#1b2230"</span>,
+    <span class="str">"portalColor"</span>: <span class="str">"#ffd7a2"</span>,         <span class="com">// 洞口天光颜色</span>
+    <span class="str">"flash"</span>: { <span class="str">"dur"</span>: <span class="nul">0.42</span>, <span class="str">"peak"</span>: <span class="nul">0.86</span> }  <span class="com">// 接缝掩体：一次过曝</span>
+  },
+
+  <span class="str">"atmosphere"</span>: {
+    <span class="str">"fogColor"</span>: <span class="str">"#3a2b1a"</span>,
+    <span class="str">"fogDensity"</span>: <span class="nul">0.038</span>,             <span class="com">// 45 m 处透过率 ≈ 0.18</span>
+    <span class="str">"grain"</span>: <span class="nul">0.010</span>,
+    <span class="str">"vignette"</span>: <span class="nul">0.42</span>,
+    <span class="str">"dust"</span>: <span class="nul">60</span>                     <span class="com">// 尘埃粒子数，0 = 关</span>
+  },
+
+  <span class="str">"palette"</span>: { <span class="str">"wall"</span>: <span class="str">"#241d15"</span>, <span class="str">"road"</span>: <span class="str">"#16140f"</span>, <span class="str">"line"</span>: <span class="str">"#b7ab93"</span> }
+}</code></pre>
+
+  <h3>rider.&lt;风格&gt;.json</h3>
+  <pre><code>{
+  <span class="str">"schema"</span>: 1, <span class="str">"id"</span>: <span class="str">"silhouette-a"</span>,
+  <span class="str">"model"</span>: <span class="str">"assets/models/rider_silhouette.glb"</span>,
+  <span class="str">"height"</span>: <span class="nul">1.62</span>,                      <span class="com">// 米，用来和隧道尺度对齐</span>
+  <span class="str">"style"</span>: { <span class="str">"albedo"</span>: <span class="str">"#121212"</span>, <span class="str">"rimWidth"</span>: <span class="nul">0.012</span>, <span class="str">"rimColor"</span>: <span class="str">"#ffc27a"</span> },
+  <span class="str">"pose"</span>: {
+    <span class="str">"crouch"</span>: <span class="nul">0.22</span>,                   <span class="com">// 0=站, 1=深蹲；程序化姿态的基准</span>
+    <span class="str">"leanGain"</span>: <span class="nul">1.6</span>,                   <span class="com">// 曲率 → 侧倾 的放大系数</span>
+    <span class="str">"leanMax"</span>: <span class="nul">0.38</span>,                  <span class="com">// 弧度，约 22°</span>
+    <span class="str">"bobAmp"</span>: <span class="nul">0.012</span>, <span class="str">"bobFreq"</span>: <span class="nul">2.0</span>
+  },
+  <span class="str">"board"</span>: { <span class="str">"length"</span>: <span class="nul">0.82</span>, <span class="str">"pitchGain"</span>: <span class="nul">0.9</span> }
+}</code></pre>
+
+  <h3>event.&lt;剧本&gt;.json</h3>
+  <pre><code>{
+  <span class="str">"schema"</span>: 1, <span class="str">"id"</span>: <span class="str">"drift"</span>,
+  <span class="str">"loop"</span>: <span class="nul">18</span>,                          <span class="com">// 每 18 分钟一轮剧本</span>
+  <span class="str">"events"</span>: [
+    { <span class="str">"at"</span>: <span class="nul">0.12</span>, <span class="str">"type"</span>: <span class="str">"headlights"</span>, <span class="str">"dur"</span>: <span class="nul">0.8</span>, <span class="str">"side"</span>: <span class="str">"left"</span> },
+    { <span class="str">"at"</span>: <span class="nul">0.34</span>, <span class="str">"type"</span>: <span class="str">"graffiti"</span>,   <span class="str">"texture"</span>: <span class="str">"tag_02.png"</span>, <span class="str">"ring"</span>: <span class="nul">3</span> },
+    { <span class="str">"at"</span>: <span class="nul">0.61</span>, <span class="str">"type"</span>: <span class="str">"moth"</span>,      <span class="str">"dur"</span>: <span class="nul">6.0</span> },
+    { <span class="str">"at"</span>: <span class="nul">0.88</span>, <span class="str">"type"</span>: <span class="str">"fanHum"</span>,   <span class="str">"game"</span>: <span class="str">"audio"</span> }
+  ]
+}</code></pre>
+
+  <div class="note warn">
+    <p><b>版本规则：</b><code>schema</code> 只增不改。读到未知字段直接忽略；读到更高版本就退回内置默认预设并记一条日志——壁纸不能因为一个 JSON 写错就黑屏。所有数值字段都要有 <code>min/max</code> 夹取，<b>坏数据必须降级成默认值，而不是抛异常</b>。</p>
+  </div>
+</section>
+
+<!-- ================= 08 运行时管线 ================= -->
+<section id="s8">
+  <h2><span class="num">08</span>运行时管线<span class="en">Frame Pipeline</span></h2>
+
+  <p class="lead">壁纸是常驻进程，所以每一帧都要有预算。下面是 60 fps（16.6 ms）下的分配，以及 30 fps 上限档（33.3 ms）的余量。</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>阶段</th><th>做什么</th><th>60fps 预算</th><th>超支后的动作</th></tr></thead>
+      <tbody>
+        <tr><td>0 · lifecycle</td><td>暂停/恢复、可见性、切屏</td><td>0.1 ms</td><td>—</td></tr>
+        <tr><td>1 · advance</td><td><code>s += v·dt</code>，取弧长点与切线</td><td>0.1 ms</td><td>—</td></tr>
+        <tr><td>2 · camera</td><td>机位求解 + 阻尼插值</td><td>0.3 ms</td><td>降阻尼 → 直跟</td></tr>
+        <tr><td>3 · cull</td><td>可见环窗口（前后 60 m）</td><td>0.3 ms</td><td>窗口缩到 40 m</td></tr>
+        <tr><td>4 · tube</td><td>环形几何绘制 / 实例化</td><td>4.5 ms</td><td>环距 ×1.6</td></tr>
+        <tr><td>5 · rider</td><td>姿态求解 + 侧倾</td><td>0.4 ms</td><td>固定姿态</td></tr>
+        <tr><td>6 · light &amp; fog</td><td>灯带、天光、体积雾</td><td>2.5 ms</td><td>雾改屏幕空间近似</td></tr>
+        <tr><td>7 · post</td><td>颗粒 + 暗角 + 接缝过曝</td><td>1.2 ms</td><td>颗粒关</td></tr>
+        <tr><td>8 · headroom</td><td>留给宿主与 GC</td><td>7.2 ms</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>主循环（伪代码）</h3>
+  <pre><code><span class="kw">function</span> <span class="fn">frame</span>(now) {
+  dt = <span class="fn">min</span>((now - last) / <span class="nul">1000</span>, <span class="nul">0.05</span>);   <span class="com">// 夹住 dt：切回前台不会瞬移</span>
+  last = now;
+
+  <span class="kw">if</span> (paused) { <span class="fn">requestAnimationFrame</span>(frame); <span class="kw">return</span>; }
+
+  s = (s + speed * dt) % loop.length;       <span class="com">// ← 无限的核心只有这一行</span>
+  <span class="kw">if</span> (s &lt; prevS) flash.<span class="fn">trigger</span>();          <span class="com">// 跨过接缝：过曝掩体</span>
+  prevS = s;
+
+  camera.<span class="fn">solve</span>(s, dt);
+  tube.<span class="fn">beginFrame</span>(s);                     <span class="com">// 只更新可见环窗口</span>
+  rider.<span class="fn">pose</span>(s, curvature(s + <span class="nul">6</span>));     <span class="com">// 预读前方 6 m 的曲率做侧倾</span>
+  lights.<span class="fn">update</span>(s, tSlow);
+  atmosphere.<span class="fn">update</span>(s, tSlow);
+
+  budget.<span class="fn">sample</span>(dt);                     <span class="com">// 滚动平均 → 触发降级阶梯</span>
+  renderer.<span class="fn">render</span>();
+  <span class="fn">requestAnimationFrame</span>(frame);
+}</code></pre>
+
+  <h3>接缝掩体：三层同周期 + 一次过曝</h3>
+  <ol>
+    <li><strong>几何同周期</strong>——路径闭合，环窗口按 <code>s % length</code> 取，第 0 环与第 N 环是同一个环。</li>
+    <li><strong>贴图同周期</strong>——UV 用弧长归一化，<code>u = s / length</code>，保证接缝处纹理连续。</li>
+    <li><strong>灯光同周期</strong>——灯带间距必须能整除周长：<code>length / spacing</code> 取整后回写 <code>spacing</code>，否则接缝处会错半个灯。</li>
+    <li><strong>过曝掩体</strong>——第 0 米处放一个「洞口」，跨过时 0.42 s 过曝。<b>这是主动掩盖，不是被动对齐</b>：允许 1 px 的错位，因为没人能在全白的一瞬间看见它。</li>
+  </ol>
+
+  <div class="note good">
+    <p><b>为什么灯距要整除周长：</b>295 m / 9 m = 32.8，不整除。运行时会把 <code>spacing</code> 改成 <code>length / round(length/spacing)</code> = 295/33 ≈ 8.94 m。差 6 cm，肉眼不可见，但接缝处不会出现半盏灯。</p>
+  </div>
+</section>
+
+<!-- ================= 09 关键算法 ================= -->
+<section id="s9">
+  <h2><span class="num">09</span>关键算法<span class="en">Core Algorithms</span></h2>
+
+  <h3>9.1 弧长参数化（速度均匀的唯一步骤）</h3>
+  <p>直接对参数 <code>u</code> 线性推进，速度会忽快忽慢，闭环处最明显。必须先建一张弧长表，再按米取点。</p>
+  <pre><code><span class="com">// 一次构建，之后每帧 O(1)</span>
+<span class="kw">const</span> N = <span class="nul">4096</span>, pts = [], cum = [<span class="nul">0</span>];
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="nul">0</span>; i &lt;= N; i++) pts.<span class="fn">push</span>(<span class="fn">pathAt</span>(i / N * TAU));
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="nul">1</span>; i &lt;= N; i++) cum[i] = cum[i - <span class="nul">1</span>] + <span class="fn">dist</span>(pts[i - <span class="nul">1</span>], pts[i]);
+<span class="kw">const</span> total = cum[N];
+
+<span class="com">// 均匀重采样成 0.5 m 一格，得到 pos[] 与 tan[]</span>
+<span class="kw">const</span> step = <span class="nul">0.5</span>, M = <span class="fn">round</span>(total / step);
+<span class="kw">for</span> (<span class="kw">let</span> k = <span class="nul">0</span>; k &lt; M; k++) {                              <span class="com">// 二分查找 u，线性插值</span>
+  <span class="kw">const</span> u = <span class="fn">uAtLength</span>(k * step);
+  pos[k] = <span class="fn">pathAt</span>(u);
+  tan[k] = <span class="fn">normalize</span>(<span class="fn">dlengthAt</span>(u));
+}</code></pre>
+
+  <h3>9.2 重力对齐标架（镜头不歪的关键）</h3>
+  <pre><code><span class="kw">function</span> <span class="fn">frameAt</span>(T) {                    <span class="com">// T = 单位切线</span>
+  <span class="kw">let</span> U = <span class="fn">sub</span>([<span class="nul">0</span>, <span class="nul">1</span>, <span class="nul">0</span>], <span class="fn">scale</span>(T, T[<span class="nul">1</span>]));     <span class="com">// 世界上向剔除切向分量</span>
+  <span class="kw">if</span> (<span class="fn">len</span>(U) &lt; <span class="nul">1e-3</span>) U = [<span class="nul">0</span>, <span class="nul">0</span>, <span class="nul">1</span>];        <span class="com">// 竖直段退化保护</span>
+  U = <span class="fn">normalize</span>(U);
+  <span class="kw">const</span> R = <span class="fn">normalize</span>(<span class="fn">cross</span>(U, T));         <span class="com">// 右</span>
+  <span class="kw">return</span> [R, <span class="fn">cross</span>(T, R)];                 <span class="com">// 右, 上</span>
+}</code></pre>
+
+  <h3>9.3 马蹄形截面（拱 + 平路面）</h3>
+  <pre><code><span class="kw">function</span> <span class="fn">sectionAt</span>(deg) {
+  <span class="kw">if</span> (deg &gt;= <span class="nul">225</span> &amp;&amp; deg &lt;= <span class="nul">315</span>) {           <span class="com">// 底部 90° 压成弦，就是路面</span>
+    <span class="kw">const</span> t = (deg - <span class="nul">225</span>) / <span class="nul">90</span>;
+    <span class="kw">return</span> [W_FLOOR * (-<span class="nul">1</span> + <span class="nul">2</span> * t), FLOORY];
+  }
+  <span class="kw">const</span> a = deg * Math.PI / <span class="nul">180</span>;
+  <span class="kw">return</span> [RAD * Math.<span class="fn">cos</span>(a), RAD * Math.<span class="fn">sin</span>(a)];
+}</code></pre>
+
+  <h3>9.4 曲率 → 侧倾（姿态可信的全部秘密）</h3>
+  <p>滑手不需要骨骼动画，只需要三件事：<b>膝盖随节奏微屈、身体压向弯心、板面随坡度俯仰</b>。曲率从前方 6 m 预读，避免「先歪后弯」。</p>
+  <pre><code><span class="kw">const</span> kappa = <span class="fn">curvatureAt</span>(s + <span class="nul">6</span>);              <span class="com">// 1/m，带符号</span>
+<span class="kw">const</span> lean  = <span class="fn">clamp</span>(kappa * speed² * gain, -MAX, MAX); <span class="com">// 向心加速度 → 侧倾角</span>
+<span class="kw">const</span> bob   = Math.<span class="fn">sin</span>(t * bobFreq) * bobAmp;      <span class="com">// 呼吸/蹬地节奏</span>
+<span class="kw">const</span> pitch = -<span class="fn">slopeAt</span>(s) * pitchGain;            <span class="com">// 上坡抬板头</span>
+rider.rotation.<span class="fn">set</span>(pitch, <span class="fn">yaw</span>(s), lean);
+rider.<span class="fn">knees</span>(crouch + bob);                       <span class="com">// 只有一个自由度</span></code></pre>
+
+  <div class="note">
+    <p><b>为什么这两个公式够用：</b>在 100 px 高的背影上，人眼能分辨的信息只有「重心高低、朝向、板的角度」。这三个量恰好都有物理来源（曲率、坡度、节奏），所以看起来「像真的在滑」，而不像在飘。</p>
+  </div>
+
+  <h3>9.5 确定性随机（每圈必须一模一样）</h3>
+  <p>墙上的装饰、裂缝、涂鸦位置如果用 <code>Math.random()</code>，每圈都会变——那就不是闭环了。<b>所有装饰的随机种子 = 环索引</b>。</p>
+  <pre><code><span class="kw">function</span> <span class="fn">rng</span>(seed) { <span class="kw">return</span> () =&gt; (seed = (seed * <span class="nul">1664525</span> + <span class="nul">1013904223</span>) &gt;&gt;&gt; <span class="nul">0</span>) / <span class="nul">4294967296</span>; }
+<span class="kw">const</span> r = <span class="fn">rng</span>(ringIndex * <span class="nul">7919</span>);               <span class="com">// 第 7 环永远长在同一个位置</span></code></pre>
+</section>
+
+<!-- ================= 10 内容管线 ================= -->
+<section id="s10">
+  <h2><span class="num">10</span>内容管线<span class="en">Content Pipeline</span></h2>
+
+  <p class="lead">你的强项是「出图 + 分镜」，这个项目要把它接上 3D。接法不是从零建模，而是<b>用图定调，用代码造形</b>。</p>
+
+  <ol class="steps">
+    <li>
+      <strong>出 12 张氛围图，只选 1 张当锚定帧</strong>
+      <p>用你现有的出图流程（超分、统一色调）跑 12 张隧道氛围稿，只挑一张作为「色彩与光的宪法」。其余 11 张的价值是排除法。</p>
+    </li>
+    <li>
+      <strong>从那张图里只提取 5 个值</strong>
+      <p>主色、辅色、暗部色、雾色、高光色。写进 <code>palette</code> 字段。图的其余信息一律不追——纹理靠程序生成，形状靠代码。</p>
+    </li>
+    <li>
+      <strong>隧道由代码生成，只做贴图</strong>
+      <p>管壁、拱肋、路面全部程序化。唯一需要的外部资产是一张 512×512 可平铺噪声，用来打破 CG 的均匀感。这是整个项目里最省成本的决定。</p>
+    </li>
+    <li>
+      <strong>滑手用「低模 + 剪影」，不从零绑定</strong>
+      <p>一个 8k 面的基础人形，摆出一个滑行基准姿势，压成纯黑材质，加 1 px 边缘光。不做绑定、不做动画——姿态由 9.4 的三个公式驱动。</p>
+    </li>
+    <li>
+      <strong>预设化，然后批量出缩略图</strong>
+      <p>每套预设自动抓 <code>t=0.2</code> 的一帧生成 <code>thumbnail.jpg</code>，保证商店页风格统一。这一步必须自动化，否则做十套预设会崩。</p>
+    </li>
+  </ol>
+
+  <h3>资产预算</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>资产</th><th>规格</th><th>体积</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr><td>滑手 GLB</td><td>≤ 8k 三角面，单网格，单材质</td><td>≤ 400 KB</td><td>剪影不需要法线细节</td></tr>
+        <tr><td>墙面噪声</td><td>512²，可平铺，灰度</td><td>≤ 180 KB</td><td>PNG-8 足够</td></tr>
+        <tr><td>颗粒噪声</td><td>128²，程序生成</td><td>0 KB</td><td>运行时用 canvas 生成</td></tr>
+        <tr><td>预设 JSON</td><td>3 套</td><td>≤ 6 KB</td><td>人可读、可手改</td></tr>
+        <tr><td>音频（v1.2）</td><td>1 条 8 s 循环环境音</td><td>≤ 900 KB</td><td>默认静音</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>命名规范</h3>
+  <ul>
+    <li>预设：<code>tunnel.&lt;主题&gt;.json</code>，主题用 kebab-case，例：<code>tunnel.sodium-mountain.json</code>。</li>
+    <li>角色：<code>rider.&lt;风格&gt;.json</code>。</li>
+    <li>版本：<code>v0.x</code> 内部迭代，<code>v1.0</code> 起对外；<code>schema</code> 与产品版本解耦。</li>
+    <li>构建产物：<code>无限隧道-&lt;预设&gt;-&lt;分辨率&gt;.png</code>，与你现有文件命名一致。</li>
+  </ul>
+</section>
+
+<!-- ================= 11 平台与分发 ================= -->
+<section id="s11">
+  <h2><span class="num">11</span>平台与分发<span class="en">Platform &amp; Shipping</span></h2>
+
+  <p class="lead">一份代码，三个宿主。差异集中在一个 200 行以内的适配层里——这也是为什么架构要把平台放在最顶层。</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>项</th><th>Lively Wallpaper</th><th>Wallpaper Engine</th><th>浏览器（开发）</th></tr></thead>
+      <tbody>
+        <tr><td>内核</td><td>WebView2（Edge）</td><td>CEF（Chromium）</td><td>Chrome / Edge</td></tr>
+        <tr><td>入口</td><td><code>LivelyInfo.json</code>，Type 1</td><td><code>project.json</code>，<code>type:"web"</code></td><td><code>index.html?preset=…</code></td></tr>
+        <tr><td>暂停信号</td><td><code>livelyWallpaperPaused</code> 事件</td><td><code>wallpaperRegisterAudioListener</code> / 可见性</td><td><code>visibilitychange</code></td></tr>
+        <tr><td>资源协议</td><td><code>file://</code>（受限）</td><td><code>file://</code>（受限）</td><td><code>file://</code> 或 <code>http://</code></td></tr>
+        <tr><td>音频</td><td>默认关闭</td><td>可读系统音频做可视化</td><td>需用户手势</td></tr>
+        <tr><td>多屏</td><td>每屏一个实例</td><td>每屏一个实例</td><td>—</td></tr>
+        <tr><td>调试</td><td>打包前必须单文件</td><td>同左</td><td>完整 devtools</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>file:// 陷阱清单（第一件事就要验证）</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>写法</th><th>在 file:// 下</th><th>替代方案</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;script type="module"&gt;</code></td><td class="mono" style="color:#ff8d8d">✕ 被 CORS 拦</td><td>打成 classic script，或全内联</td></tr>
+        <tr><td><code>fetch('presets/x.json')</code></td><td class="mono" style="color:#ff8d8d">✕ 常被拦</td><td>构建期转成 <code>const PRESETS = {…}</code></td></tr>
+        <tr><td><code>XHR</code> 读本地 <code>.glb</code></td><td class="mono" style="color:#ffb86c">△ 看宿主标志</td><td>模型转 base64 内联，或改用 <code>&lt;img&gt;</code> 纹理</td></tr>
+        <tr><td><code>@font-face</code> 本地字体</td><td class="mono" style="color:#ffb86c">△ 部分版本静默失败</td><td>系统字体栈，或转 woff2 内联</td></tr>
+        <tr><td>Worker / WASM</td><td class="mono" style="color:#ff8d8d">✕ 基本不可用</td><td>v1 不用；全部主线程</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note bad">
+    <p><b>这不是理论风险。</b>你现有的 <code>巨映山河</code> 能跑，正是因为它是一个内联 <code>&lt;script&gt;</code>、没有 import、没有 fetch。新项目一旦按「现代前端」的习惯写 <code>type="module"</code> + <code>fetch</code>，在 Lively 里就是白屏。<b>M1 的第一个任务不是渲染，是验证这三件事。</b></p>
+  </div>
+
+  <h3>分辨率与宽高比</h3>
+  <ul>
+    <li><strong>垂直 FOV 锁定</strong>：不管 16:9 还是 21:9，垂直视角固定 56°，超宽屏自然获得更多左右（隧道壁），不会把人物拉变形。</li>
+    <li><strong>21:9 / 32:9</strong>：人物锚点从 <code>0.56W</code> 右移到 <code>0.62W</code>，避免在超宽屏上正中悬空。</li>
+    <li><strong>竖屏 / 双屏</strong>：竖屏时把机位抬高、FOV 收窄；双屏时两台实例相位错开 <code>length/2</code>，避免两个屏完全同步（同步会显得假）。</li>
+    <li><strong>4K</strong>：<code>dpr</code> 上限 1.5，几何不变，只提采样；4K 下强制 30 fps 上限。</li>
+  </ul>
+</section>
+
+<!-- ================= 12 性能预算 ================= -->
+<section id="s12">
+  <h2><span class="num">12</span>性能预算<span class="en">Performance</span></h2>
+
+  <p class="lead">3D 壁纸的成本和 2D 不是一个量级：你现在这版 <code>巨映山河</code> 是一张图加 canvas 调度，几乎不占 GPU；3D 是<b>常驻渲染</b>。所以预算必须写死在验收标准里，而不是「跑起来看看」。</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>指标</th><th>目标（1440p）</th><th>红线</th><th>监测方式</th></tr></thead>
+      <tbody>
+        <tr><td>帧率</td><td>60 fps（上限 30 fps 可配）</td><td>≥ 30 fps</td><td>滚动 60 帧平均</td></tr>
+        <tr><td>单帧 GPU</td><td>≤ 6 ms</td><td>≤ 12 ms</td><td>EXT_disjoint_timer_query</td></tr>
+        <tr><td>单帧 CPU</td><td>≤ 8 ms</td><td>≤ 14 ms</td><td>performance.now 分段</td></tr>
+        <tr><td>三角面</td><td>≤ 120 k</td><td>≤ 200 k</td><td>renderer.info</td></tr>
+        <tr><td>Draw call</td><td>≤ 45</td><td>≤ 80</td><td>renderer.info</td></tr>
+        <tr><td>显存 / 内存</td><td>≤ 220 MB / 180 MB</td><td>≤ 320 MB</td><td>任务管理器 + 8 h 采样</td></tr>
+        <tr><td>冷启动</td><td>≤ 1.5 s</td><td>≤ 3 s</td><td>首帧时间戳</td></tr>
+        <tr><td>稳态 CPU 占用</td><td>≤ 8%</td><td>≤ 15%</td><td>挂机 30 min 采样</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>降级阶梯（自动，逐级下探，不回弹）</h3>
+  <div class="cards">
+    <div class="card green">
+      <h4><span class="dot"></span>Q0 · 满配</h4>
+      <p>dpr 1.5 · 环距 1.5 m · 尘埃 60 · 颗粒开 · 体积雾</p>
+      <p class="mono" style="color:var(--dim-2)">帧时 &lt; 12 ms 时保持</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>Q1 · 轻降</h4>
+      <p>dpr 1.25 · 环距 2.0 m · 尘埃 30</p>
+      <p class="mono" style="color:var(--dim-2)">帧时 &gt; 12 ms 触发</p>
+    </div>
+    <div class="card">
+      <h4><span class="dot"></span>Q2 · 中降</h4>
+      <p>dpr 1.0 · 环距 2.5 m · 尘埃关 · 雾改屏幕空间近似</p>
+      <p class="mono" style="color:var(--dim-2)">帧时 &gt; 16 ms 触发</p>
+    </div>
+    <div class="card amber">
+      <h4><span class="dot"></span>Q3 · 保命</h4>
+      <p>dpr 0.75 · 环距 3.5 m · 30 fps 上限 · 颗粒关</p>
+      <p class="mono" style="color:var(--dim-2)">帧时 &gt; 22 ms 触发</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><b>降级只降不升</b>是有意的：反复横跳比一直低画质更难受，而且会让 GPU 占用震荡。每 10 分钟允许尝试回升一级，失败就锁定。</p>
+  </div>
+
+  <h3>与现有 2D 壁纸的成本对照</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th></th><th>巨映山河 · 渡口（2D）</th><th>无限隧道（3D）</th></tr></thead>
+      <tbody>
+        <tr><td>资产</td><td>1 张 5 MB 底图</td><td>1 个 GLB + 1 张噪声 + 3 个 JSON</td></tr>
+        <tr><td>每帧绘制</td><td>1 次 drawImage + 若干渐变</td><td>约 40 次 draw call</td></tr>
+        <tr><td>GPU 占用</td><td>≈ 0</td><td>2–6 ms</td></tr>
+        <tr><td>换风格成本</td><td>重新出图（小时级）</td><td>改 JSON（分钟级）</td></tr>
+        <tr><td>能否交互</td><td>能（已做双击）</td><td>能，但 v1 刻意不做</td></tr>
+        <tr><td>风险</td><td>低</td><td>中（发热、驱动差异）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 13 里程碑 ================= -->
+<section id="s13">
+  <h2><span class="num">13</span>里程碑与判死门<span class="en">Milestones &amp; Gates</span></h2>
+
+  <p class="lead">五个阶段，总共约五周（业余时间）。每个阶段末尾有一个<b>判死门</b>：不通过就回到上一阶段，而不是「先做完再看」。这是防止两周做出一个不好看的东西的唯一办法。</p>
+
+  <div class="mile">
+    <div class="ms g1">
+      <i>M0 · 2 天 · 已完成</i>
+      <b>构图样机</b>
+      <span>2D Canvas 线条光样机，三套预设、三种机位、接缝过曝。</span>
+      <span class="gate">门：把这一帧贴在桌面上，看 60 秒，还想看吗？</span>
+    </div>
+    <div class="ms g2">
+      <i>M1 · 1 周</i>
+      <b>闭环管道</b>
+      <span>Three.js 马蹄形管壁 + 弧长参数化 + 相机跟随 + 单文件打包。</span>
+      <span class="gate">门：连续盯 40 分钟看不出重复；1440p ≥ 30 fps。</span>
+    </div>
+    <div class="ms g2">
+      <i>M2 · 1 周</i>
+      <b>剪影滑手</b>
+      <span>低模 + 程序化姿态 + 三种机位 + 边缘光。</span>
+      <span class="gate">门：找 5 个不看说明的人，≥ 3 个能说出「他在滑板」。</span>
+    </div>
+    <div class="ms g3">
+      <i>M3 · 1 周</i>
+      <b>预设与壳</b>
+      <span>三套隧道、设置面板、Lively + WE 双打包、缩略图自动化。</span>
+      <span class="gate">门：换预设 &lt; 1 s；冷启动 &lt; 1.5 s；两个平台都能装。</span>
+    </div>
+    <div class="ms g4">
+      <i>M4 · 1 周</i>
+      <b>长时演化与发布</b>
+      <span>18 min 大周期、微事件、8 h 漂移、省电模式。</span>
+      <span class="gate">门：挂机 8 小时不崩、显存不涨、90 秒内出现一次可见变化。</span>
+    </div>
+  </div>
+
+  <div class="note warn">
+    <p><b>判死门怎么用：</b>不过门就不进入下一阶段，先修当前阶段。M0 不过（静帧不好看）→ 不做 3D；M1 不过（跑不到 30 fps）→ 退回「预渲染环 + 2D 视差」，那是你已经有能力交付的形态；M2 不过（人看不出在滑板）→ 把角色改成纯剪影+速度拖影，放弃可识别性。</p>
+  </div>
+</section>
+
+<!-- ================= 14 风险 ================= -->
+<section id="s14">
+  <h2><span class="num">14</span>风险矩阵<span class="en">Risk Matrix</span></h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>风险</th><th>概率</th><th>影响</th><th>缓解</th><th>预警信号</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>滑手「在飘」</td><td><span class="chip hi">高</span></td><td><span class="chip hi">高</span></td>
+          <td>剪影 + 程序化姿态（曲率驱动侧倾）；先做 M2 盲测再投入</td>
+          <td>自己看 30 秒觉得假</td>
+        </tr>
+        <tr>
+          <td>file:// 白屏</td><td><span class="chip md">中</span></td><td><span class="chip hi">致命</span></td>
+          <td>单文件 classic script；M1 第一天先验证 import/fetch/GLB 三件事</td>
+          <td>Lively 导入后全黑</td>
+        </tr>
+        <tr>
+          <td>发热与掉帧</td><td><span class="chip hi">高</span></td><td><span class="chip md">中</span></td>
+          <td>30 fps 上限 + 降级阶梯 + 全屏独占时暂停</td>
+          <td>风扇起飞、笔记本烫手</td>
+        </tr>
+        <tr>
+          <td>接缝被看出来</td><td><span class="chip md">中</span></td><td><span class="chip hi">高</span></td>
+          <td>几何/贴图/灯光三同周期 + 洞口过曝掩体</td>
+          <td>盯着某个灯看两圈能对上</td>
+        </tr>
+        <tr>
+          <td>审美疲劳</td><td><span class="chip hi">高</span></td><td><span class="chip md">中</span></td>
+          <td>18 min 大周期 + 3–7 min 微事件 + 8 h 天光漂移</td>
+          <td>自己挂一天没发现任何变化</td>
+        </tr>
+        <tr>
+          <td>范围膨胀</td><td><span class="chip hi">高</span></td><td><span class="chip hi">高</span></td>
+          <td>「不做什么」清单写死；每个阶段只有一个判死门</td>
+          <td>开始想加玩法、加角色、加剧情</td>
+        </tr>
+        <tr>
+          <td>模型版权</td><td><span class="chip lo">低</span></td><td><span class="chip hi">高</span></td>
+          <td>只用自制或明确可商用的低模；剪影本身就规避了大部分相似性</td>
+          <td>找不到可商用滑板模型</td>
+        </tr>
+        <tr>
+          <td>商店审核/分发</td><td><span class="chip lo">低</span></td><td><span class="chip md">中</span></td>
+          <td>先本地分发（直接给文件夹），上架作为可选步骤</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 15 验收 ================= -->
+<section id="s15">
+  <h2><span class="num">15</span>验收清单<span class="en">Acceptance</span></h2>
+
+  <p class="lead">每一条都必须能当场演示，不允许「大概可以」。</p>
+
+  <ul class="check">
+    <li><b>无缝：</b>连续观察 40 分钟，指出循环接缝的具体秒数——做不到即通过。</li>
+    <li><b>姿态：</b>截取 5 张不同弯道的静帧，滑手重心方向与弯心方向一致。</li>
+    <li><b>尺度：</b>人物身高与隧道净高比例在 1:3.2 ± 0.2 之间（一眼不像玩具）。</li>
+    <li><b>可读性：</b>叠加 20 个 32 px 桌面图标后，图标识别时间 &lt; 1.2 s。</li>
+    <li><b>切换：</b>三套预设切换均 &lt; 1 s，且切换瞬间不闪黑、不重建曲线。</li>
+    <li><b>性能：</b>1440p 下稳态 ≥ 30 fps，挂机 30 min 后帧率不低于首帧的 90%。</li>
+    <li><b>长时：</b>挂机 8 h 不崩、不内存泄漏（显存增长 &lt; 30 MB）。</li>
+    <li><b>宿主机：</b>Lively 与 Wallpaper Engine 均可安装、可暂停、可恢复。</li>
+    <li><b>单文件：</b><code>dist/index.html</code> 双击即可运行，不依赖本地服务器。</li>
+    <li><b>降级：</b>手动把帧率压到 20 fps，能观测到 Q1→Q3 的自动降级。</li>
+  </ul>
+</section>
+
+<!-- ================= 16 路线 ================= -->
+<section id="s16">
+  <h2><span class="num">16</span>路线图<span class="en">Roadmap</span></h2>
+
+  <p class="lead">v1 是「一条隧道做得足够好」，v2 才是「很多条隧道」。顺序不能反——系列化的前提是第一个能挂住。</p>
+
+  <div class="steps">
+    <li>
+      <strong>v1.0 · 三套预设（第 5 周）</strong>
+      <p>钠灯山体 / 冷白管廊 / 霓虹下穿。双平台可装，缩略图自动化。这是「可以给别人看」的第一个版本。</p>
+    </li>
+    <li>
+      <strong>v1.2 · 时间与声音（+2 周）</strong>
+      <p>18 分钟大周期、微事件剧本、可选环境音（默认静音）。这一步决定它能不能被挂一个月。</p>
+    </li>
+    <li>
+      <strong>v1.5 · 自定义（+3 周）</strong>
+      <p>让用户改三件事：灯色、灯距、坡度。不做曲线编辑器——那会毁掉美术下限。改完可导出成 JSON 分享。</p>
+    </li>
+    <li>
+      <strong>v2.0 · 第二卷：海底隧道（+4 周）</strong>
+      <p>换标架（RMF）、换介质（水）、换生物（鱼群剪影）。技术复用 80%，是验证「引擎可系列化」的关键一步。</p>
+    </li>
+    <li>
+      <strong>v2.x · 系列化与分发</strong>
+      <p>废弃矿道 / 极地管线 / 太空环。做成「卷」的合集（Vol.1–3），Wallpaper Engine 上架 + 本地直发双轨。</p>
+    </li>
+  </div>
+
+  <div class="note good">
+    <p><b>收入模型（如果要做）：</b>不卖单张，卖「卷」。一卷 = 3 套隧道 + 1 套角色轮廓，定价按壁纸引擎的常规区间。真正的长期价值是 v1.5 的自定义导出——用户生成的预设会变成免费的内容更新。</p>
+  </div>
+</section>
+
+<!-- ================= 17 附录 ================= -->
+<section id="s17">
+  <h2><span class="num">17</span>附录<span class="en">Appendix</span></h2>
+
+  <h3>v0.1 → v1.1 变更记录</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>v0.1 写的</th><th>v1.1 改成</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td>「角色切换」与「隧道切换」并列两个维度</td><td>隧道为主轴，角色降级为「轮廓皮肤」</td><td>两者成本差一个数量级，并列会误导排期</td></tr>
+        <tr><td>MVP：两套角色 + 两套隧道 + Lively 导入</td><td>M0 只做一条曲线、一个剪影、一套预设</td><td>先验证构图，再验证功能</td></tr>
+        <tr><td>验收：「20–30 秒无明显接缝」</td><td>验收：「40 分钟看不出重复」</td><td>壁纸的时间尺度是小时</td></tr>
+        <tr><td>未提美术设定</td><td>三张锚定帧 + 八条可量化硬约束</td><td>壁纸是被看的，不是被跑的</td></tr>
+        <tr><td>未提分发</td><td>Lively + Wallpaper Engine 双发，一份 build</td><td>边际成本几乎为零，市场大一个量级</td></tr>
+        <tr><td>技术栈未约束打包方式</td><td>单文件 classic script，禁用 module/fetch</td><td>file:// 下的真实约束</td></tr>
+        <tr><td>「可选神秘感」若干条</td><td>18 min / 8 h 三层时间 + 微事件剧本</td><td>把「神秘感」变成可排期的功能</td></tr>
+        <tr><td>风险：5 条定性描述</td><td>风险矩阵：概率/影响/缓解/预警信号</td><td>风险要能触发行动，不是罗列</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>术语</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>词</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td>闭环 / 主环</td><td>首尾相接的中心线，走完一圈回到原点，是「无限」的数学来源</td></tr>
+        <tr><td>弧长参数化</td><td>按米推进而不是按参数推进，保证速度均匀</td></tr>
+        <tr><td>重力对齐标架</td><td>让路面永远水平、镜头永远不歪的局部坐标系</td></tr>
+        <tr><td>接缝掩体</td><td>用一个自然事件（出洞口过曝）主动掩盖循环接缝</td></tr>
+        <tr><td>判死门</td><td>每个阶段末尾的硬性验收，不过不进入下一阶段</td></tr>
+        <tr><td>降级阶梯</td><td>按帧时自动降低画质，只降不升</td></tr>
+        <tr><td>三同周期</td><td>几何、贴图 UV、灯距都必须与周长整除，否则接缝会错位</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>参考</h3>
+  <ul>
+    <li>Three.js <code>CatmullRomCurve3</code>（closed + centripetal）与 <code>Curve.computeFrenetFrames</code> 的闭合修正实现。</li>
+    <li>Lively Wallpaper 网页壁纸的 <code>LivelyInfo.json</code> 结构与 <code>--pause-event</code> 参数。</li>
+    <li>Wallpaper Engine 的 web 类型工程结构（<code>project.json</code>）。</li>
+    <li>项目内既有参考：<a href="巨映山河-动态壁纸/index.html">巨映山河 · 渡口</a>（生命周期与暂停骨架）、<a href="深色.html">深色.html</a>（v0.1 原始构想）。</li>
+  </ul>
+</section>
+
+<footer>
+  <span>无限隧道 · 工程蓝图 v1.1</span>
+  <span>M0 样机可运行 · Canvas2D → Three.js</span>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================================
+     无限隧道 · 样机渲染器
+     与 presets/tunnel.*.json 字段一一对应；正式版把这里的线条光换成
+     Three.js 的管壁 / 材质 / 体积雾，逻辑与镜头语言不变。
+     ===================================================================== */
+
+  var cv = document.getElementById("tunnel");
+  if (!cv) return;
+  var ctx = cv.getContext("2d", { alpha: false });
+
+  // ---- 中心线：闭合 Fourier 曲线（天然 C∞，天然闭合）----
+  var LP = { A1: 43.61, A2: 12.20, B1: 45.45, B2: 6.54, C1: 1.90, C2: 1.29,
+             PH2: 4.1085, PS2: 4.1083, R2: 4.2432, R3: 2.8956 };
+  function pathAt(u) {
+    return [
+      LP.A1 * Math.sin(u) + LP.A2 * Math.sin(2 * u + LP.PH2),
+      LP.C1 * Math.sin(2 * u + LP.R2) + LP.C2 * Math.sin(3 * u + LP.R3),
+      LP.B1 * Math.cos(u) + LP.B2 * Math.cos(2 * u + LP.PS2)
+    ];
+  }
+  function derivAt(u, h) {
+    var a = pathAt(u - h), b = pathAt(u + h);
+    return [(b[0] - a[0]) / (2 * h), (b[1] - a[1]) / (2 * h), (b[2] - a[2]) / (2 * h)];
+  }
+
+  // ---- 弧长表 + 均匀重采样 ----
+  var TAU = Math.PI * 2, N = 4096;
+  var us = [], ps = [], cum = [0];
+  for (var i = 0; i <= N; i++) {
+    var uu = i / N * TAU;
+    us.push(uu); ps.push(pathAt(uu));
+  }
+  for (var i2 = 1; i2 <= N; i2++) {
+    var dx = ps[i2][0] - ps[i2 - 1][0], dy = ps[i2][1] - ps[i2 - 1][1], dz = ps[i2][2] - ps[i2 - 1][2];
+    cum.push(cum[i2 - 1] + Math.sqrt(dx * dx + dy * dy + dz * dz));
+  }
+  var TOTAL = cum[N];
+  var SPACING = 0.5, M = Math.round(TOTAL / SPACING);
+  var POS = [], TAN = [];
+  (function () {
+    var j = 0;
+    for (var k = 0; k < M; k++) {
+      var target = k * SPACING;
+      while (j < N - 1 && cum[j + 1] < target) j++;
+      var seg = cum[j + 1] - cum[j];
+      var f = seg > 0 ? (target - cum[j]) / seg : 0;
+      var u = us[j] + (us[j + 1] - us[j]) * f;
+      POS.push(pathAt(u));
+      var d = derivAt(u, 1e-4), l = Math.hypot(d[0], d[1], d[2]) || 1;
+      TAN.push([d[0] / l, d[1] / l, d[2] / l]);
+    }
+  })();
+
+  // ---- 几何常量 ----
+  var RAD = 3.15, FLOOR_H = 0.585;
+  var FLOORY = -FLOOR_H * RAD;
+  var W_FLOOR = Math.sqrt(Math.max(0, RAD * RAD - FLOORY * FLOORY));
+  var SEG = 64;
+
+  function sectionAt(deg) {
+    if (deg >= 225 && deg <= 315) {
+      var t = (deg - 225) / 90;
+      return [W_FLOOR * (-1 + 2 * t), FLOORY];
+    }
+    var a = deg * Math.PI / 180;
+    return [RAD * Math.cos(a), RAD * Math.sin(a)];
+  }
+  var SEC = [];
+  for (var s3 = 0; s3 < SEG; s3++) {
+    var dg = 360 * s3 / SEG;
+    var p2 = sectionAt(dg);
+    SEC.push({ deg: dg, x: p2[0], y: p2[1] });
+  }
+  var ARCH = SEC.filter(function (p) { return p.deg >= 315 || p.deg <= 225; });
+  var FLOOR_LIST = SEC.filter(function (p) { return p.deg > 225 && p.deg < 315; });
+
+  // ---- 预设（对应 presets/tunnel.*.json）----
+  var PRESETS = {
+    sodium: { name: "钠灯山体隧道", bg: "#05070b", glow: "#2a1a09", lamp: "#ffab4d",
+              fog: "#3a2b1a", spacing: 9.0, line: "#c9bda4", fogd: 0.032 },
+    cold:   { name: "冷白工业管廊", bg: "#04060a", glow: "#081320", lamp: "#d6e9ff",
+              fog: "#26374a", spacing: 6.8, line: "#a9bccb", fogd: 0.038 },
+    neon:   { name: "霓虹下穿道",   bg: "#03040a", glow: "#0c1030", lamp: "#3fe3ff",
+              fog: "#2b3070", spacing: 7.2, line: "#9fb2e6", fogd: 0.036 }
+  };
+
+  var state = { preset: "sodium", cam: "back34", speed: 9, paused: false, s: 30, flash: 0, t: 0 };
+  var CAMS = {
+    back34: { r: 0.55, u: 1.05, ride: 4.5 },
+    low:    { r: 0.32, u: 0.74, ride: 4.6 },
+    far:    { r: 0.90, u: 1.75, ride: 6.2 }
+  };
+
+  var W = 0, H = 0, DPR = 1, focal = 0;
+
+  function resize() {
+    var rect = cv.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+    W = Math.max(2, Math.round(rect.width));
+    H = Math.max(2, Math.round(rect.height));
+    cv.width = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    focal = (H * 0.5) / Math.tan(56 * Math.PI / 360);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function sampleAt(s) {
+    s = s % TOTAL; if (s < 0) s += TOTAL;
+    var idx = s / SPACING;
+    var i0 = Math.floor(idx) % M, i1 = (i0 + 1) % M, f = idx - Math.floor(idx);
+    var p0 = POS[i0], p1 = POS[i1], t0 = TAN[i0], t1 = TAN[i1];
+    return {
+      p: [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f],
+      t: [t0[0] + (t1[0] - t0[0]) * f, t0[1] + (t1[1] - t0[1]) * f, t0[2] + (t1[2] - t0[2]) * f]
+    };
+  }
+
+  function frameOf(T) {
+    var d = T[1];
+    var U = [-T[0] * d, 1 - T[1] * d, -T[2] * d];
+    var l = Math.hypot(U[0], U[1], U[2]) || 1;
+    U = [U[0] / l, U[1] / l, U[2] / l];
+    var R = [U[1] * T[2] - U[2] * T[1], U[2] * T[0] - U[0] * T[2], U[0] * T[1] - U[1] * T[0]];
+    l = Math.hypot(R[0], R[1], R[2]) || 1;
+    R = [R[0] / l, R[1] / l, R[2] / l];
+    return [R, [T[1] * R[2] - T[2] * R[1], T[2] * R[0] - T[0] * R[2], T[0] * R[1] - T[1] * R[0]]];
+  }
+
+  function draw() {
+    var P = PRESETS[state.preset];
+    var cam = CAMS[state.cam];
+
+    var st = sampleAt(state.s);
+    var fr = frameOf(st.t);
+    var Rc = fr[0], Uc = fr[1];
+    var camPos = [
+      st.p[0] + Rc[0] * cam.r + Uc[0] * (FLOORY + cam.u),
+      st.p[1] + Rc[1] * cam.r + Uc[1] * (FLOORY + cam.u),
+      st.p[2] + Rc[2] * cam.r + Uc[2] * (FLOORY + cam.u)
+    ];
+    var fwd = [st.t[0] + Uc[0] * 0.02, st.t[1] + Uc[1] * 0.02 + 0.012, st.t[2] + Uc[2] * 0.02];
+    var fl = Math.hypot(fwd[0], fwd[1], fwd[2]) || 1;
+    fwd = [fwd[0] / fl, fwd[1] / fl, fwd[2] / fl];
+    var right = [-fwd[2], 0, fwd[0]];
+    var rl = Math.hypot(right[0], right[2]) || 1;
+    right = [right[0] / rl, 0, right[2] / rl];
+    var up = [right[1] * fwd[2] - right[2] * fwd[1],
+              right[2] * fwd[0] - right[0] * fwd[2],
+              right[0] * fwd[1] - right[1] * fwd[0]];
+
+    var cxp = W * 0.5, cyp = H * 0.5;
+
+    function project(p) {
+      var vx = p[0] - camPos[0], vy = p[1] - camPos[1], vz = p[2] - camPos[2];
+      var z = vx * fwd[0] + vy * fwd[1] + vz * fwd[2];
+      if (z < 0.05) return null;
+      var x = vx * right[0] + vy * right[1] + vz * right[2];
+      var y = vx * up[0] + vy * up[1] + vz * up[2];
+      return [cxp + focal * x / z, cyp - focal * y / z, z];
+    }
+
+    function shapeAt(d, list) {
+      var sm = sampleAt(state.s + d);
+      var f2 = frameOf(sm.t);
+      var R = f2[0], U = f2[1], out = [];
+      for (var k = 0; k < list.length; k++) {
+        var q = project([
+          sm.p[0] + R[0] * list[k].x + U[0] * list[k].y,
+          sm.p[1] + R[1] * list[k].x + U[1] * list[k].y,
+          sm.p[2] + R[2] * list[k].x + U[2] * list[k].y
+        ]);
+        if (!q) return null;
+        out.push(q);
+      }
+      return out;
+    }
+
+    // 背景：消失点方向的暖雾
+    ctx.fillStyle = P.bg;
+    ctx.fillRect(0, 0, W, H);
+    var farArch = shapeAt(52, ARCH);
+    if (farArch) {
+      var ax = 0, ay = 0;
+      for (var a1 = 0; a1 < farArch.length; a1++) { ax += farArch[a1][0]; ay += farArch[a1][1]; }
+      ax /= farArch.length; ay /= farArch.length;
+      var bg = ctx.createRadialGradient(ax, ay, 0, ax, ay, Math.max(W, H) * 0.62);
+      bg.addColorStop(0, hexA(P.glow, 0.95));
+      bg.addColorStop(0.55, hexA(P.glow, 0.28));
+      bg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // 路面标线（先画，后叠加灯光）
+    var roadPts = [];
+    for (var d = 1.2; d < 36; d += 1.2) {
+      var sm2 = sampleAt(state.s + d), f3 = frameOf(sm2.t);
+      roadPts.push({ d: d, R: f3[0], U: f3[1], p: sm2.p });
+    }
+    function floorPt(seg, lat, dy) {
+      dy = dy || 0.012;
+      return project([
+        seg.p[0] + seg.R[0] * lat + seg.U[0] * (FLOORY + dy),
+        seg.p[1] + seg.R[1] * lat + seg.U[1] * (FLOORY + dy),
+        seg.p[2] + seg.R[2] * lat + seg.U[2] * (FLOORY + dy)
+      ]);
+    }
+    var edge = 0.88 * W_FLOOR;
+    for (var e1 = -1; e1 <= 1; e1 += 2) {
+      ctx.beginPath();
+      var started = false;
+      for (var r1 = 0; r1 < roadPts.length; r1++) {
+        var q1 = floorPt(roadPts[r1], edge * e1);
+        if (!q1) { started = false; continue; }
+        if (!started) { ctx.moveTo(q1[0], q1[1]); started = true; } else ctx.lineTo(q1[0], q1[1]);
+      }
+      ctx.strokeStyle = hexA(P.line, 0.32);
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+    for (var r2 = 3; r2 < roadPts.length - 1; r2 += 3) {
+      var seg0 = roadPts[r2], seg1 = roadPts[Math.min(r2 + 1, roadPts.length - 1)];
+      var a2 = floorPt(seg0, -0.07), b2 = floorPt(seg1, -0.07);
+      var c2 = floorPt(seg1, 0.07), d2 = floorPt(seg0, 0.07);
+      if (a2 && b2 && c2 && d2) {
+        ctx.beginPath();
+        ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]);
+        ctx.lineTo(c2[0], c2[1]); ctx.lineTo(d2[0], d2[1]);
+        ctx.closePath();
+        ctx.fillStyle = hexA(P.line, 0.26);
+        ctx.fill();
+      }
+    }
+
+    // 拱肋：每 spacing 米一道，随距离衰减
+    ctx.globalCompositeOperation = "lighter";
+    var sp = P.spacing;
+    var firstK = Math.floor(state.s / sp) - 1;
+    var ribs = [];
+    for (var k = firstK; k < firstK + 20; k++) {
+      var dd = k * sp - state.s;
+      if (dd < 2.4 || dd > 60) continue;
+      var arch = shapeAt(dd, ARCH);
+      if (arch) ribs.push({ d: dd, pts: arch });
+    }
+    ribs.sort(function (a, b) { return b.d - a.d; });
+
+    for (var i4 = 0; i4 < ribs.length; i4++) {
+      var rb = ribs[i4];
+      var fg = Math.exp(-rb.d * P.fogd * 1.15);
+      if (fg < 0.012) continue;
+      var wd = Math.max(0.8, focal * 0.030 / rb.d);
+      ctx.beginPath();
+      ctx.moveTo(rb.pts[0][0], rb.pts[0][1]);
+      for (var p4 = 1; p4 < rb.pts.length; p4++) ctx.lineTo(rb.pts[p4][0], rb.pts[p4][1]);
+      ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.shadowColor = hexA(P.lamp, Math.min(0.9, fg * 0.9));
+      ctx.shadowBlur = Math.min(34, wd * 9);
+      ctx.strokeStyle = hexA(P.lamp, Math.min(1, fg * 0.95));
+      ctx.lineWidth = wd;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = hexA(P.lamp, Math.min(1, fg * 0.16));
+      ctx.lineWidth = wd * 4.2;
+      ctx.stroke();
+    }
+
+    // 地面光斑（拱脚）
+    for (var i5 = 0; i5 < ribs.length; i5++) {
+      var rb2 = ribs[i5];
+      var fg2 = Math.exp(-rb2.d * P.fogd * 1.15);
+      if (fg2 < 0.05 || rb2.d < 4.5) continue;
+      for (var e2 = 0; e2 < 2; e2++) {
+        var q2 = rb2.pts[e2 === 0 ? 0 : rb2.pts.length - 1];
+        var rad = Math.min(Math.max(2, focal * 0.14 / q2[2]), focal * 0.045);
+        var g2 = ctx.createRadialGradient(q2[0], q2[1], 0, q2[0], q2[1], rad * 2.2);
+        g2.addColorStop(0, hexA(P.lamp, 0.24 * fg2));
+        g2.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = g2;
+        ctx.beginPath();
+        ctx.ellipse(q2[0], q2[1] + rad * 0.3, rad * 1.45, rad * 0.55, 0, 0, TAU);
+        ctx.fill();
+      }
+    }
+    ctx.globalCompositeOperation = "source-over";
+
+    // 滑手剪影
+    var rideSeg = sampleAt(state.s + cam.ride);
+    var rf = frameOf(rideSeg.t);
+    var basePt = project([
+      rideSeg.p[0] + rf[0][0] * 0.18 + rf[1][0] * (FLOORY + 0.01),
+      rideSeg.p[1] + rf[0][1] * 0.18 + rf[1][1] * (FLOORY + 0.01),
+      rideSeg.p[2] + rf[0][2] * 0.18 + rf[1][2] * (FLOORY + 0.01)
+    ]);
+    if (basePt) drawRider(basePt[0], basePt[1], focal * 0.96 / basePt[2], state.t, P);
+
+    // 接缝过曝
+    if (state.flash > 0.001) {
+      var fa = state.flash * 0.82;
+      var fg3 = ctx.createRadialGradient(W * 0.5, H * 0.42, 0, W * 0.5, H * 0.42, Math.max(W, H) * 0.8);
+      fg3.addColorStop(0, "rgba(255,246,232," + (fa).toFixed(3) + ")");
+      fg3.addColorStop(0.55, "rgba(255,214,160," + (fa * 0.5).toFixed(3) + ")");
+      fg3.addColorStop(1, "rgba(255,180,110,0)");
+      ctx.fillStyle = fg3;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // 颗粒（静态噪点，抗色带）
+    if (grainCanvas) {
+      ctx.globalAlpha = 0.05;
+      ctx.globalCompositeOperation = "overlay";
+      ctx.drawImage(grainCanvas, 0, 0, W, H);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+  }
+
+  function hexA(hex, a) {
+    var h = hex.replace("#", "");
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return "rgba(" + r + "," + g + "," + b + "," + a + ")";
+  }
+
+  function drawRider(x, y, h, t, P) {
+    if (!(h > 4) || h > 4000) return;
+    var k = h;
+    var bob = Math.sin(t * 2.0) * 0.010;
+    var lean = 0.08 + Math.sin(t * 0.7) * 0.03;
+    var ca = Math.cos(lean), sa = Math.sin(lean);
+    function P2(px, py) {
+      var px2 = px * ca - (py - 0.42) * sa;
+      var py2 = py * ca + px * sa;
+      return [x + px2 * k, y - py2 * k];
+    }
+    // 轮廓本身画两遍：先偏移一次画暖色（形成单侧边缘光），再用纯黑盖回来
+    function silhouette(color) {
+      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      var b1 = P2(-0.42, 0.055), b2 = P2(0.42, 0.055);
+      ctx.lineWidth = Math.max(1.5, 0.045 * k);
+      ctx.beginPath(); ctx.moveTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke();
+      for (var w = -1; w <= 1; w += 2) {
+        var cw = P2(w * 0.30, 0.042);
+        ctx.beginPath(); ctx.arc(cw[0], cw[1], Math.max(1, 0.048 * k), 0, TAU); ctx.fill();
+      }
+      ctx.lineWidth = Math.max(1.5, 0.10 * k);
+      for (var sgn = -1; sgn <= 1; sgn += 2) {
+        var l1 = P2(sgn * 0.18, 0.46 + bob), l2 = P2(sgn * 0.26, 0.26 + bob), l3 = P2(sgn * 0.17, 0.09);
+        ctx.beginPath(); ctx.moveTo(l1[0], l1[1]); ctx.lineTo(l2[0], l2[1]); ctx.lineTo(l3[0], l3[1]); ctx.stroke();
+      }
+      var t1 = P2(-0.20, 0.44 + bob), t2 = P2(0.19, 0.44 + bob), t3 = P2(0.25, 0.70 + bob), t4 = P2(-0.12, 0.72 + bob);
+      ctx.beginPath(); ctx.moveTo(t1[0], t1[1]); ctx.lineTo(t2[0], t2[1]); ctx.lineTo(t3[0], t3[1]); ctx.lineTo(t4[0], t4[1]); ctx.closePath(); ctx.fill();
+      var hd = P2(0.06, 0.815 + bob);
+      ctx.beginPath(); ctx.arc(hd[0], hd[1], Math.max(1, 0.098 * k), 0, TAU); ctx.fill();
+      ctx.lineWidth = Math.max(1.5, 0.075 * k);
+      var a1 = P2(-0.14, 0.68 + bob), a2 = P2(-0.36, 0.50 + bob);
+      var a3 = P2(0.22, 0.69 + bob), a4 = P2(0.40, 0.55 + bob);
+      ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(a3[0], a3[1]); ctx.lineTo(a4[0], a4[1]); ctx.stroke();
+    }
+    ctx.save();
+    ctx.translate(-Math.max(1, k * 0.014), -Math.max(1, k * 0.016));
+    ctx.globalAlpha = 0.75;
+    silhouette(hexA(P.lamp, 0.75));
+    ctx.restore();
+    ctx.save();
+    silhouette("#08080a");
+    ctx.restore();
+  }
+
+  // 颗粒贴图（只生成一次）
+  var grainCanvas = null;
+  (function makeGrain() {
+    var c = document.createElement("canvas");
+    c.width = c.height = 128;
+    var g = c.getContext("2d");
+    var img = g.createImageData(128, 128);
+    for (var i = 0; i < img.data.length; i += 4) {
+      var v = 118 + Math.random() * 20;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    grainCanvas = c;
+  })();
+
+  // ---- 主循环 ----
+  var last = 0, fpsAcc = 0, fpsN = 0, fpsShown = 0;
+  var hudFps = document.getElementById("hudFps");
+  var loopFill = document.getElementById("loopFill");
+
+  function tick(now) {
+    if (!last) last = now;
+    var dt = (now - last) / 1000;
+    if (!(dt > 0)) dt = 1 / 60;
+    dt = Math.min(dt, 0.05);
+    last = now;
+
+    if (!state.paused) {
+      state.t += dt;
+      var prev = state.s;
+      state.s = (state.s + state.speed * dt) % TOTAL;
+      if (state.s < prev) state.flash = 1;
+      state.flash = Math.max(0, state.flash - dt * 2.4);
+    }
+
+    draw();
+
+    fpsAcc += dt; fpsN++;
+    if (fpsAcc > 0.25) {
+      fpsShown = Math.round(fpsN / fpsAcc);
+      if (hudFps) hudFps.textContent = fpsShown;
+      fpsAcc = 0; fpsN = 0;
+    }
+    if (loopFill) loopFill.style.width = (state.s / TOTAL * 100).toFixed(2) + "%";
+    requestAnimationFrame(tick);
+  }
+
+  // ---- 交互 ----
+  document.querySelectorAll("#presetSeg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("#presetSeg button").forEach(function (o) { o.classList.remove("on"); });
+      b.classList.add("on");
+      state.preset = b.dataset.p;
+      var P = PRESETS[state.preset];
+      document.getElementById("hudPreset").textContent = P.name;
+      document.getElementById("hudInfo").textContent = "loop " + TOTAL.toFixed(0) + "m · spacing " + P.spacing.toFixed(1) + "m";
+    });
+  });
+  document.querySelectorAll("#camSeg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("#camSeg button").forEach(function (o) { o.classList.remove("on"); });
+      b.classList.add("on");
+      state.cam = b.dataset.c;
+    });
+  });
+  var pauseBtn = document.getElementById("pause");
+  pauseBtn.addEventListener("click", function () {
+    state.paused = !state.paused;
+    pauseBtn.textContent = state.paused ? "继续" : "暂停";
+  });
+  var spd = document.getElementById("spd"), spdV = document.getElementById("spdV");
+  spd.addEventListener("input", function () {
+    state.speed = parseFloat(spd.value);
+    spdV.textContent = state.speed.toFixed(1);
+    document.getElementById("hudSpeed").textContent = state.speed.toFixed(1) + " m/s";
+  });
+  document.getElementById("jump").addEventListener("click", function () {
+    state.s = TOTAL - 8;        // 距离接缝 8 m，约 0.9 秒后过曝
+    state.flash = 0;
+  });
+
+  document.getElementById("hudInfo").textContent = "loop " + TOTAL.toFixed(0) + "m · spacing 9.0m";
+
+  // ?preset=neon&cam=low&t=0.35&pause=1  —— 开发期直接定帧，用于出图与回归
+  (function applyUrl() {
+    var q = new URLSearchParams(location.search);
+    var pp = q.get("preset"), cc = q.get("cam"), tt = parseFloat(q.get("t"));
+    if (pp && PRESETS[pp]) {
+      state.preset = pp;
+      document.querySelectorAll("#presetSeg button").forEach(function (b) {
+        b.classList.toggle("on", b.dataset.p === pp);
+      });
+      document.getElementById("hudPreset").textContent = PRESETS[pp].name;
+      document.getElementById("hudInfo").textContent = "loop " + TOTAL.toFixed(0) + "m · spacing " + PRESETS[pp].spacing.toFixed(1) + "m";
+    }
+    if (cc && CAMS[cc]) {
+      state.cam = cc;
+      document.querySelectorAll("#camSeg button").forEach(function (b) {
+        b.classList.toggle("on", b.dataset.c === cc);
+      });
+    }
+    if (!isNaN(tt)) { state.s = ((tt % 1) + 1) % 1 * TOTAL; }
+    if (q.get("pause") === "1") { state.paused = true; pauseBtn.textContent = "继续"; }
+  })();
+
+  // ---- 生命周期 ----
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) { state.paused = e.isIntersecting ? false : true; });
+  }, { threshold: 0.02 });
+  io.observe(cv);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) last = 0;
+  });
+  var rT;
+  window.addEventListener("resize", function () {
+    clearTimeout(rT);
+    rT = setTimeout(resize, 120);
+  });
+
+  resize();
+  requestAnimationFrame(tick);
+
+  // ---- 文档侧：目录高亮 + 进度条 ----
+  var links = Array.prototype.slice.call(document.querySelectorAll(".toc a"));
+  var secs = links.map(function (a) { return document.querySelector(a.getAttribute("href")); }).filter(Boolean);
+  var prog = document.getElementById("prog");
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      var off = 120, cur = secs[0];
+      for (var i = 0; i < secs.length; i++) {
+        if (secs[i].getBoundingClientRect().top - off <= 0) cur = secs[i];
+      }
+      links.forEach(function (a) { a.classList.toggle("active", a.getAttribute("href") === "#" + cur.id); });
+      var h = document.documentElement;
+      var p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+      if (prog) prog.style.width = (p * 100).toFixed(2) + "%";
+      ticking = false;
+    });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</main>
+</div>
+</body>
+</html>

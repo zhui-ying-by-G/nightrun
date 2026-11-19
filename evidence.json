@@ -1,0 +1,74 @@
+{
+  "deliverable": "宵行 · Nightrun 公开仓库（GitHub Pages 子域名 nightrun.fxdgrld.top）",
+  "repo": "D:/我/nightrun",
+  "date": "2026-11-19",
+  "tier": "landing",
+  "brief": "DESIGN.md",
+  "checks": {
+    "art_direction_audit": {
+      "command": "python <html-art-direction>/scripts/audit.py index.html",
+      "blocking": 0,
+      "adjudicate": [
+        {
+          "finding": "1 ALL-CAPS Latin run in CJK page: CC-BY-NC-4.0",
+          "decision": "KEEP",
+          "reason": "许可证标识符，携带标题与正文没有的法定许可信息；非装饰性凑数标签。"
+        }
+      ],
+      "measure": { "body_px": 17, "main_px": 690, "chars_per_line": 37.5, "band": [24, 38], "in_band": true },
+      "contrast": "PASS (every ink/muted token vs own-theme surfaces)",
+      "offline": "PASS (no external src/href/@import/url)",
+      "a11y": "PASS (10 interactive, focus rule present)",
+      "motion": "PASS (animated + prefers-reduced-motion)",
+      "voice_ratio": 0.0
+    },
+    "nightrun_gate": {
+      "command": "node tools/verify-nightrun.mjs",
+      "result": "PASS",
+      "gates": 26,
+      "passed": 26,
+      "evidence": "shots-nightrun/nightrun.json",
+      "highlights": {
+        "lively_zero_pageerror": true,
+        "external_rider_globals_undefined": ["MODEL_DATA", "createRider2B", "createRiderModel", "createRiderWanqiu", "WANQIU_RIG"],
+        "js_probe": "rgb(255, 171, 77)",
+        "old_save_replay_frames": [275, 366],
+        "old_save_replay_riderModel_clamped": 0,
+        "lab_fps": 52.9,
+        "export_manifest": { "Title": "宵行 · Nightrun", "Version": 12, "License": "CC-BY-NC-4.0" },
+        "repo_ip_scan_clean": true,
+        "cname": "nightrun.fxdgrld.top"
+      }
+    },
+    "landing_gate": {
+      "command": "node tools/landing-check.mjs",
+      "result": "PASS",
+      "gates": 8,
+      "passed": 8,
+      "evidence": "shots-nightrun/landing.json",
+      "screenshots": ["shots-nightrun/landing-wide.png (2560x1600 fullPage)", "shots-nightrun/landing-narrow.png (480x900 fullPage)"],
+      "hero_naturalWidth": 2560,
+      "scene_naturalWidth": 1600,
+      "narrow_no_h_overflow": { "scrollWidth": 480, "innerWidth": 480 },
+      "local_links_resolve": true,
+      "external_links_whitelisted": true
+    },
+    "lively_validate": {
+      "command": "python <lively-wallpaper>/scripts/validate.py _nightrun/lively",
+      "result": "OK",
+      "zip_root_entries": ["LivelyInfo.json", "LivelyInfo.loc.json", "LivelyProperties.json", "LivelyProperties.loc.json", "index.html", "thumbnail.jpg", "README.txt", "assets/props/racer.js"]
+    }
+  },
+  "render_verification": "VERIFIED (headless Edge, borrowed playwright; wide 2560x1600 + narrow 480x900; lively stage + lab + landing)",
+  "not_verified_on_desktop": [
+    "真机 Lively 拖入网站下载的 zip（需作者一次拖库 + setwp）",
+    "GitHub Pages 上线与 DNS 生效（需作者建仓/推送/Release）",
+    "落地页文案与跑车许可声明的最终审美/法务确认（作者）"
+  ],
+  "pending_author": [
+    "创建仓库 nightrun 并推送（外部可见动作，须作者确认）",
+    "Settings→Pages main/(root)；注册商 CNAME nightrun→zhui-ying-by-G.github.io；Enforce HTTPS",
+    "dist/nightrun-lively.zip 作为 Release 附件（tag v1.0），落地页下载按钮才生效",
+    "跑车第三方出处与许可的真实声明（README/落地页/footer 现为占位）"
+  ]
+}

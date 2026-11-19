@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>无限隧道 · 人物建模方案 v2 — 灾变后末世 · 荒废高速穿山隧道</title>
+<style>
+/* ============ 色彩系统：全部取自这条隧道本身 ============
+   钠灯橙是主色族（最大面积），应急冷青与出口苔绿是 full-chroma 重音，
+   铁锈红 / 危险红 / 警示黄承担语义，沥青与混凝土是暖冷中性。 */
+:root{
+  --asphalt:#080a0c; --asphalt2:#0d1013; --concrete:#15181c; --concrete2:#1c2126;
+  --overlay:#22282e; --scrim:rgba(6,8,10,.78);
+  --sodium:#ffab4d; --sodium-hi:#ffd7a2; --sodium-deep:#c96a12; --sodium-glow:rgba(255,171,77,.16);
+  --emergency:#3fe3ff; --moss:#9fd356; --rust:#b4462a;
+  --danger:#ff4d4d; --warn:#f2c14e; --ok:#7ddc8a; --info:#8fb8ff;
+  --warm:#c9bda4; --cool:#8fa3b8; --ink:#e8e2d6; --ink-dim:#a49c8c; --ink-faint:#6f6a60;
+  --line:rgba(201,189,164,.14); --line2:rgba(201,189,164,.26);
+  --mono:"Cascadia Mono","JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --sans:"Segoe UI Variable Display","Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --nav:60px;
+  --hue:32;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-color:var(--sodium-deep) var(--asphalt2);scrollbar-width:thin}
+body{
+  margin:0;background:var(--asphalt);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+/* 自定义滚动条：轨道是沥青，滑块是钠灯渐变 */
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:var(--asphalt2);border-left:1px solid var(--line)}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--sodium-deep),var(--sodium));border:2px solid var(--asphalt2);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--sodium),var(--sodium-hi))}
+::-webkit-scrollbar-corner{background:var(--asphalt2)}
+.rail::-webkit-scrollbar,.code::-webkit-scrollbar{width:8px;height:8px}
+
+/* ============ 层叠背景 ============ */
+#ambient{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;opacity:.62;pointer-events:none}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>")}
+.vign{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 80% at 50% 0%,transparent 40%,rgba(4,6,8,.55) 100%)}
+main,header,footer{position:relative;z-index:2}
+
+/* ============ 导航 ============ */
+header{position:fixed;top:0;left:0;right:0;height:var(--nav);z-index:50;
+  background:linear-gradient(180deg,rgba(8,10,12,.96),rgba(8,10,12,.82));
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 20px}
+.brand{display:flex;align-items:center;gap:10px;flex:0 0 auto;text-decoration:none;color:var(--ink)}
+.brand .lamp{width:11px;height:11px;border-radius:50%;background:var(--sodium);box-shadow:0 0 12px var(--sodium),0 0 26px var(--sodium-glow);animation:lampFlick 5.5s infinite}
+@keyframes lampFlick{0%,92%,100%{opacity:1}93%{opacity:.25}94%{opacity:.9}96%{opacity:.35}97%{opacity:1}}
+.brand b{font-size:14px;letter-spacing:.14em;font-weight:650}
+.brand span{font-family:var(--mono);font-size:10.5px;color:var(--sodium);letter-spacing:.1em;border:1px solid var(--line2);padding:1px 6px;border-radius:3px}
+nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto}
+nav::-webkit-scrollbar{height:0}
+nav a{flex:0 0 auto;color:var(--ink-dim);text-decoration:none;font-size:12.5px;padding:7px 11px;border-radius:5px;
+  letter-spacing:.04em;transition:color .18s,background .18s;white-space:nowrap;border:1px solid transparent}
+nav a:hover{color:var(--sodium-hi);background:rgba(255,171,77,.07)}
+nav a.on{color:var(--asphalt);background:linear-gradient(180deg,var(--sodium-hi),var(--sodium));font-weight:650;border-color:var(--sodium-hi)}
+.navstat{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--ok);display:flex;align-items:center;gap:7px}
+.navstat i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 9px var(--ok);font-style:normal}
+@media(max-width:900px){.navstat{display:none}.brand span{display:none}}
+
+/* ============ 版面 ============ */
+main{padding-top:var(--nav)}
+section{scroll-margin-top:calc(var(--nav) + 14px);padding:78px 24px;max-width:1460px;margin:0 auto;position:relative;overflow-anchor:none}
+section+section{border-top:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--sodium);margin:0 0 12px}
+h1{font-size:clamp(34px,5.4vw,68px);line-height:1.06;margin:0 0 20px;font-weight:760;letter-spacing:-.022em}
+h2{font-size:clamp(24px,3vw,38px);line-height:1.18;margin:0 0 14px;font-weight:720;letter-spacing:-.015em}
+h3{font-size:17px;margin:0 0 8px;font-weight:680;letter-spacing:.01em}
+h4{font-size:13px;margin:0 0 6px;font-weight:680;color:var(--sodium-hi);letter-spacing:.06em}
+p{margin:0 0 14px;color:var(--ink-dim)}
+.lede{font-size:clamp(16px,1.5vw,19.5px);line-height:1.85;color:var(--warm);max-width:74ch}
+strong{color:var(--ink);font-weight:650}
+em{color:var(--sodium-hi);font-style:normal}
+a{color:var(--emergency)}
+.small{font-size:13px;line-height:1.7}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dim{color:var(--ink-faint)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid var(--line2);color:var(--ink-dim)}
+.tag.ok{color:var(--ok);border-color:rgba(125,220,138,.4);background:rgba(125,220,138,.08)}
+.tag.warn{color:var(--warn);border-color:rgba(242,193,78,.4);background:rgba(242,193,78,.08)}
+.tag.bad{color:var(--danger);border-color:rgba(255,77,77,.4);background:rgba(255,77,77,.08)}
+.tag.info{color:var(--info);border-color:rgba(143,184,255,.4);background:rgba(143,184,255,.08)}
+
+/* 揭示动画 */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+
+/* ============ HERO ============ */
+#hero{padding-top:96px;padding-bottom:64px;min-height:calc(100vh - var(--nav));display:flex;flex-direction:column;justify-content:center}
+#hero:before{content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(70% 55% at 22% 18%,rgba(255,171,77,.13),transparent 62%),
+             radial-gradient(60% 50% at 84% 72%,rgba(63,227,255,.09),transparent 60%),
+             radial-gradient(50% 40% at 60% 100%,rgba(159,211,86,.06),transparent 65%)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr);gap:44px;align-items:end}
+@media(max-width:1000px){.hero-grid{grid-template-columns:1fr;gap:28px}}
+.rulings{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0}
+.ruling{display:flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:6px;padding:7px 12px;background:rgba(21,24,28,.7);font-size:12.5px}
+.ruling b{font-family:var(--mono);color:var(--sodium);font-size:11.5px}
+.hero-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hstat{background:linear-gradient(160deg,var(--concrete),var(--asphalt2));padding:16px 18px}
+.hstat .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--ink-faint);text-transform:uppercase}
+.hstat .v{font-family:var(--mono);font-size:clamp(22px,2.5vw,32px);font-weight:600;color:var(--sodium-hi);line-height:1.2;font-variant-numeric:tabular-nums}
+.hstat .u{font-size:11.5px;color:var(--ink-dim);font-family:var(--sans)}
+.scrollcue{margin-top:38px;display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--ink-faint)}
+.scrollcue i{display:block;width:1px;height:34px;background:linear-gradient(180deg,var(--sodium),transparent);animation:cue 2.4s infinite}
+@keyframes cue{0%{transform:scaleY(.2);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(.2);transform-origin:bottom}}
+
+/* ============ 卡片 / 裁决 ============ */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px;margin-top:26px}
+.card{border:1px solid var(--line);border-radius:10px;padding:20px 22px;background:linear-gradient(165deg,rgba(28,33,38,.86),rgba(13,16,19,.9));position:relative;overflow:hidden;transition:border-color .25s,transform .25s}
+.card:hover{border-color:var(--line2);transform:translateY(-2px)}
+.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--sodium))}
+.card .no{font-family:var(--mono);font-size:11px;color:var(--accent,var(--sodium));letter-spacing:.16em}
+.card p{font-size:13.5px;margin-bottom:10px}
+.card .ev{font-family:var(--mono);font-size:11.5px;color:var(--cool);border-top:1px dashed var(--line2);padding-top:10px;margin-top:12px;line-height:1.85}
+
+/* ============ 实验室 ============ */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 348px;gap:20px;margin-top:26px;align-items:start}
+@media(max-width:1120px){.lab{display:block}.lab>div:first-child{margin-bottom:18px}}
+.stage{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:
+  linear-gradient(180deg,rgba(13,16,19,.94),rgba(8,10,12,.97));position:relative}
+.stage canvas{display:block;width:100%;touch-action:manipulation}
+#cvSpeed{height:308px}#cvForce{height:212px}#cvRear{height:392px}#cvTop{height:196px}#cvRoute{height:498px}#cvRig{height:430px}
+.stage .hint{position:absolute;left:14px;top:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);pointer-events:none;text-transform:uppercase}
+.stage .badge{position:absolute;right:12px;top:10px;display:flex;gap:6px;pointer-events:none}
+.readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.ro{background:rgba(13,16,19,.92);padding:10px 13px}
+.ro .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;color:var(--ink-faint);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ro .v{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--sodium-hi);font-variant-numeric:tabular-nums;line-height:1.35}
+.ro .v.cy{color:var(--emergency)} .ro .v.gr{color:var(--moss)} .ro .v.rd{color:var(--danger)} .ro .v.wn{color:var(--warn)}
+.ro .s{font-size:10.5px;color:var(--ink-faint);font-family:var(--mono)}
+
+/* 控制轨：常驻可见，不折叠 */
+.rail{border:1px solid var(--line2);border-radius:12px;background:linear-gradient(180deg,rgba(28,33,38,.95),rgba(13,16,19,.97));
+  padding:16px 16px 18px;position:sticky;top:calc(var(--nav) + 14px);max-height:calc(100vh - var(--nav) - 30px);overflow-y:auto}
+@media(max-width:1120px){.rail{position:static;max-height:none}}
+.rail h4{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.rail h4 span{font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.12em}
+.grp{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--sodium-deep);text-transform:uppercase;margin:14px 0 8px}
+.ctl{margin-bottom:11px}
+.ctl .lbl{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;color:var(--ink-dim);margin-bottom:3px}
+.ctl .lbl b{font-family:var(--mono);font-size:12px;color:var(--sodium-hi);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;display:block;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--sodium-deep),var(--concrete2));border:1px solid var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-6.5px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,var(--sodium-hi),var(--sodium) 62%,var(--sodium-deep));border:1px solid rgba(0,0,0,.5);
+  box-shadow:0 0 9px var(--sodium-glow);transition:box-shadow .15s,transform .15s}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 16px rgba(255,171,77,.55);transform:scale(1.12)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--concrete2);border:1px solid var(--line)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--sodium);border:1px solid rgba(0,0,0,.5);box-shadow:0 0 9px var(--sodium-glow)}
+input[type=range]:focus-visible{outline:2px solid var(--emergency);outline-offset:3px;border-radius:4px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:12.5px;color:var(--ink-dim);cursor:pointer;border-bottom:1px dashed rgba(201,189,164,.08)}
+.sw input{position:absolute;opacity:0;width:0;height:0}
+.sw .tr{flex:0 0 auto;width:34px;height:18px;border-radius:9px;background:var(--concrete2);border:1px solid var(--line2);position:relative;transition:background .2s,border-color .2s}
+.sw .tr:after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--ink-faint);transition:transform .2s,background .2s}
+.sw input:checked+.tr{background:rgba(255,171,77,.24);border-color:var(--sodium)}
+.sw input:checked+.tr:after{transform:translateX(16px);background:var(--sodium-hi);box-shadow:0 0 8px var(--sodium)}
+.sw input:focus-visible+.tr{outline:2px solid var(--emergency);outline-offset:2px}
+.btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:14px}
+button{font-family:var(--sans);font-size:12.5px;padding:9px 10px;border-radius:6px;cursor:pointer;letter-spacing:.03em;
+  border:1px solid var(--line2);background:var(--concrete2);color:var(--ink);transition:all .16s;font-weight:550}
+button:hover{border-color:var(--sodium);color:var(--sodium-hi);background:rgba(255,171,77,.1)}
+button:active{transform:translateY(1px)}
+button.pri{background:linear-gradient(180deg,var(--sodium-hi),var(--sodium));color:#20140a;border-color:var(--sodium-hi);font-weight:700}
+button.pri:hover{background:linear-gradient(180deg,#fff0d6,var(--sodium-hi));color:#20140a;box-shadow:0 0 18px var(--sodium-glow)}
+button.wide{grid-column:1/-1}
+button:focus-visible{outline:2px solid var(--emergency);outline-offset:2px}
+.seg{display:flex;gap:4px;margin-bottom:10px}
+.seg button{flex:1;padding:7px 4px;font-family:var(--mono);font-size:11.5px}
+.seg button.on{background:linear-gradient(180deg,var(--sodium-hi),var(--sodium));color:#20140a;border-color:var(--sodium-hi);font-weight:700}
+
+/* 公式块 */
+.code{font-family:var(--mono);font-size:12.5px;line-height:2;background:rgba(6,8,10,.85);border:1px solid var(--line);
+  border-left:3px solid var(--sodium-deep);border-radius:0 8px 8px 0;padding:14px 18px;overflow-x:auto;color:var(--warm);margin:0 0 16px}
+.code b{color:var(--sodium-hi);font-weight:600}
+.code i{color:var(--emergency);font-style:normal}
+.code u{color:var(--moss);text-decoration:none}
+.code s{color:var(--danger);text-decoration:none}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px;margin-top:22px}
+.note{border:1px solid var(--line);border-left:3px solid var(--info);border-radius:0 8px 8px 0;padding:14px 18px;background:rgba(143,184,255,.05);margin:0 0 14px}
+.note.warn{border-left-color:var(--warn);background:rgba(242,193,78,.05)}
+.note.bad{border-left-color:var(--danger);background:rgba(255,77,77,.05)}
+.note.ok{border-left-color:var(--ok);background:rgba(125,220,138,.05)}
+.note h4{color:inherit}
+.note p{font-size:13.5px;margin:0}
+
+/* 闸门 chips */
+.gates{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.gate{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:5px;border:1px solid var(--line2);background:rgba(13,16,19,.8);display:flex;gap:7px;align-items:center}
+.gate i{font-style:normal;width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 7px var(--ok)}
+.gate.no i{background:var(--danger);box-shadow:0 0 7px var(--danger)}
+.gate.no{color:var(--danger);border-color:rgba(255,77,77,.35)}
+
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tbl th{background:var(--concrete2);color:var(--sodium-hi);font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;padding:11px 13px;text-align:left;border-bottom:1px solid var(--line2);font-weight:600}
+.tbl td{padding:10px 13px;border-bottom:1px solid var(--line);color:var(--ink-dim);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr:hover td{background:rgba(255,171,77,.045)}
+.tbl td.n{font-family:var(--mono);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl td.b{color:var(--warn);font-size:12.5px}
+.tblwrap{overflow-x:auto;border-radius:8px}
+
+/* 色板 */
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-top:20px}
+.swatch{border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;background:var(--concrete);transition:transform .18s,border-color .18s}
+.swatch:hover{transform:translateY(-3px);border-color:var(--line2)}
+.swatch .chip{height:62px;position:relative}
+.swatch .chip:after{content:"复制";position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:9.5px;color:rgba(0,0,0,.6);opacity:0;transition:opacity .18s}
+.swatch:hover .chip:after{opacity:1}
+.swatch .meta{padding:9px 11px}
+.swatch .nm{font-size:12.5px;color:var(--ink);font-weight:600}
+.swatch .hx{font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+
+/* 里程碑 */
+.mile{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:14px;margin-top:22px}
+.mcard{border:1px solid var(--line);border-radius:10px;padding:18px;background:linear-gradient(165deg,rgba(28,33,38,.8),rgba(13,16,19,.9));cursor:pointer;transition:all .22s;position:relative}
+.mcard:hover{border-color:var(--line2)}
+.mcard.on{border-color:var(--sodium);background:linear-gradient(165deg,rgba(255,171,77,.13),rgba(13,16,19,.94));box-shadow:0 0 26px rgba(255,171,77,.1)}
+.mcard .id{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--sodium);line-height:1}
+.mcard.on .id{color:var(--sodium-hi)}
+.mcard ul{margin:10px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink-dim);line-height:1.85}
+.mcard .acc{font-family:var(--mono);font-size:11px;color:var(--moss);margin-top:11px;border-top:1px dashed var(--line2);padding-top:9px}
+
+footer{border-top:1px solid var(--line);padding:34px 24px 54px;max-width:1460px;margin:0 auto;color:var(--ink-faint);font-size:12.5px;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:90;opacity:0;pointer-events:none;
+  background:var(--overlay);border:1px solid var(--sodium);color:var(--sodium-hi);padding:10px 20px;border-radius:7px;
+  font-family:var(--mono);font-size:12.5px;transition:opacity .25s,transform .25s;box-shadow:0 8px 34px rgba(0,0,0,.6);max-width:88vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:640px){
+  section{padding:52px 15px}
+  .hero-stats{grid-template-columns:1fr 1fr}
+  .btns{grid-template-columns:1fr 1fr}
+  .ro .v{font-size:16px}
+  h1{font-size:31px}
+}
+/* 末节必须够高，否则锚点跳到底时它停在导航下方 225 px 处而不是 74 px */
+#delivery{min-height:calc(100vh - var(--nav))}
+/* 触摸目标：桌面 20 px 的滑杆在手指下够不着 */
+@media(max-width:640px),(pointer:coarse){
+  input[type=range]{height:32px}
+  input[type=range]::-webkit-slider-thumb{width:21px;height:21px;margin-top:-9.5px}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px}
+  .sw{padding:11px 0}
+  .sw .tr{width:42px;height:24px}
+  .sw .tr:after{width:18px;height:18px}
+  .sw input:checked+.tr:after{transform:translateX(18px)}
+  .btns button{min-height:40px}
+  .seg button{min-height:36px}
+}
+/* 窄屏：画面钉在导航下方，控制轨在它下面滚。
+   否则滑杆动手时画布已滚出视口，等于看不见自己改了什么。 */
+@media(max-width:1120px){
+  .lab>div:first-child{position:sticky;top:calc(var(--nav) + 10px);align-self:start;z-index:0}
+  .readouts{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ro{padding:5px 8px}
+  .ro .v{font-size:14px;line-height:1.25}
+  .ro .k{font-size:8px;letter-spacing:.06em}
+  .ro .s{font-size:9px}
+  .gates{gap:5px;margin-top:8px}
+  .gate{font-size:9.5px;padding:3px 7px;gap:5px}
+  #cvSpeed{height:18vh}#cvForce{height:12vh}
+  #cvRear{height:20vh}#cvTop{height:12vh}
+  #cvRoute{height:26vh}#cvRig{height:24vh}
+  .stage .hint{font-size:9px;left:10px;top:8px;max-width:62%;line-height:1.5}
+  .stage .badge{right:8px;top:7px;gap:4px}
+  .stage .badge .tag{font-size:9px;padding:2px 6px}
+}
+</style>
+</head>
+<body>
+<canvas id="ambient" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div class="vign" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="#hero"><span class="lamp"></span><b>无限隧道</b><span>方案 v2</span></a>
+  <nav id="nav">
+    <a href="#rulings">裁决落点</a>
+    <a href="#speed">速度负反馈</a>
+    <a href="#lean">侧倾与头部</a>
+    <a href="#route">路线随机化</a>
+    <a href="#rig">程序化骨架</a>
+    <a href="#art">末世美术</a>
+    <a href="#ledger">实测台账</a>
+    <a href="#delivery">交付状态</a>
+  </nav>
+  <div class="navstat"><i></i><span id="navstat">25 / 25 发布门</span></div>
+</header>
+
+<main>
+<!-- ================= HERO ================= -->
+<section id="hero">
+  <div class="hero-grid">
+    <div>
+      <p class="eyebrow">工程方案 · v2 · 2026-11-13 · 灾变后末世</p>
+      <h1>荒废高速的<br>穿山隧道<span style="color:var(--sodium)">.</span></h1>
+      <p class="lede">灯成段熄灭，海报被风雨撕开、又被幸存者的喷涂覆盖，路侧堆着塌落的瓦砾。一个适应末世野外生存的少年踩着滑板巡线——<em>他的速度由你的单击决定，他的侧倾由离心力决定，他的头由前庭与视线决定。</em></p>
+      <p class="lede small" style="margin-top:14px">这份方案不是文字描述：下面四个实验室跑的是与壁纸 <span class="mono">src/scene.js</span> <strong>逐字同参</strong>的数学。拖动滑杆、单击画布、换种子，看到的就是桌面上会发生的。</p>
+      <div class="rulings">
+        <div class="ruling"><b>【1】</b>程序化骨架 <span class="tag ok">已批准</span></div>
+        <div class="ruling"><b>【2】</b>物理侧倾 · 体能上限 <span class="tag ok">已实装</span></div>
+        <div class="ruling"><b>【3】</b>交互蹬地 · 负反馈 <span class="tag ok">已实装</span></div>
+        <div class="ruling"><b>【4】</b>头部耦合 <span class="tag info">本方案定量</span></div>
+        <div class="ruling"><b>【5】</b>里程碑顺序 <span class="tag warn">待作者</span></div>
+        <div class="ruling"><b>【6】</b>命名 <span class="tag warn">待作者</span></div>
+      </div>
+      <div class="scrollcue"><i></i>向下 · 四个可操作实验室</div>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="k">实测帧率</div><div class="v">60.02</div><div class="u">fps @ 1600×1000 · CPU 0.60 ms</div></div>
+      <div class="hstat"><div class="k">绘制批次</div><div class="v">15</div><div class="u">draw call · 24 646 三角</div></div>
+      <div class="hstat"><div class="k">发布自检</div><div class="v">25/25</div><div class="u">静态门 + 真跑门 · validate 退出 0</div></div>
+      <div class="hstat"><div class="k">闭环周长</div><div class="v">295.0006</div><div class="u">m · 种子 137 · 2 次命中</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 裁决落点 ================= -->
+<section id="rulings">
+  <p class="eyebrow reveal">Rulings → Implementation</p>
+  <h2 class="reveal">六条裁决，各自落在哪一行代码</h2>
+  <p class="lede reveal">每条裁决都给出落点与实测证据。标 <span class="tag warn">待作者</span> 的两条本轮不动：里程碑执行顺序与命名。</p>
+  <div class="cards">
+    <div class="card reveal" style="--accent:var(--sodium)">
+      <div class="no">【1】程序化骨架 · 路线 A</div>
+      <h3>不引入外部模型，骨架由代码生成</h3>
+      <p>批准。骨骼链、蒙皮、IK 全部程序化，零外部资产，与隧道贴图同一套生成管线。剪影风格（反照率 <span class="mono">#08080a</span>，轮廓光 <span class="mono">#ffc27a</span>）让少年在钠灯下读成一个形体而不是一个模型。</p>
+      <div class="ev">落点：本方案 §程序化骨架 M1–M4<br>状态：架构已批准，实装未授权（【5】）</div>
+    </div>
+    <div class="card reveal" style="--accent:var(--emergency)">
+      <div class="no">【2】侧倾以物理为准 · 体能非常好</div>
+      <h3>θ = atan(κ<sub>h</sub>·v²/g) · gain</h3>
+      <p>用<strong>水平投影曲率</strong>，纵坡不压弯；用 atan 而不是线性近似。末世少年的体能体现在上限放宽到 <span class="mono">0.52 rad = 29.79°</span>（横向 0.573 g），而不是把物理角乘一个大系数。</p>
+      <div class="ev">实测：v14 / R22 → atan 42.24°，线性近似 52.03°（高估 9.8°）<br>上限匹配：R<sub>min</sub> 24.277 m 处完全协调速度上限 11.677 m/s</div>
+    </div>
+    <div class="card reveal" style="--accent:var(--moss)">
+      <div class="no">【3】蹬地必须加入 · 由桌面交互驱动</div>
+      <h3>单击桌面 = 蹬地，不是周期计时器</h3>
+      <p>推力只按<strong>离散的一脚</strong>交付（0.85 m/s），连续项只积分阻力。努力度 E(v) 是速度的函数，构成负反馈：不点桌面时稳定回落到设定速度。单击 +1.15 m/s，双击压弯脉冲。</p>
+      <div class="ev">实测：设定 8 → 平衡 8.004（+0.05%），35.5 脚/分<br>真实路线 150 s：均值 7.978（−0.27%），瞬时 6.828–9.198<br>陷阱：连续项也加推力 → 9.046（+13.08%）</div>
+    </div>
+    <div class="card reveal" style="--accent:var(--info)">
+      <div class="no">【4】头部无需严格对齐重心</div>
+      <h3>但受三条真实机制约束</h3>
+      <p>前庭-颈反射把 head 稳定在空间里（潜伏期 ~80 ms）；视线先转向弯道顶点（超前 0.35 s）；头部质量参与整体重心求解，偏离由颈部力矩预算买单。头不是躯干的刚性延伸，也不是自由漂浮。</p>
+      <div class="ev">定量：头偏离 15° → 重心横移 3.11 cm = 接触斑半宽的 34.5%<br>颈部力矩 τ = m<sub>h</sub>·|g<sub>eff</sub>|·d·sin Δθ，默认配置 ~1.4 N·m</div>
+    </div>
+    <div class="card reveal" style="--accent:var(--warn)">
+      <div class="no">【5】里程碑执行顺序后续告知</div>
+      <h3>M1–M4 本轮只出方案，不实装</h3>
+      <p>骨架查看器是<strong>示意</strong>，用于确认关节链与 IK 目标，不进入壁纸包。等你给出顺序后再动工，每个里程碑都有独立验收门。</p>
+      <div class="ev">当前壁纸包里的人物仍是 v4 的剪影 + 物理侧倾<br>蹬地/压弯已作用于速度与侧倾，尚未作用于骨骼</div>
+    </div>
+    <div class="card reveal" style="--accent:var(--rust)">
+      <div class="no">世界观补充 · 右转 · 路线随机化</div>
+      <h3>星形极坐标闭合环，种子可换</h3>
+      <p>荒废高速的穿山隧道。路线由种子随机生成，闸门强制<strong>左右弯各 ≥2 段</strong>（正号 = 右转），最小半径 ≥22 m、纵坡 ≤4.5%、非邻近段间距 ≥8.3 m。R(u)&gt;0 让水平不自穿成为构造保证而非抽样希望。</p>
+      <div class="ev">种子 137：右弯 2 段 / 263.25 m，左弯 2 段 / 31.75 m<br>最小半径 右 24.277 / 左 48.155 m，纵坡 4.062%，间距 13.811 m</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB A：速度负反馈 ================= -->
+<section id="speed">
+  <p class="eyebrow reveal">Lab A · 【3】负反馈速度控制器</p>
+  <h2 class="reveal">蹬地是一脚一脚付出去的</h2>
+  <p class="lede reveal">设定速度不是一个被强行钉住的目标，而是一个<strong>稳定不动点</strong>。努力度随速度下降，阻力随速度上升，两条曲线只交于一点。推力按离散的一脚交付，所以画面里看到的是<strong>蹬地动作</strong>，不是匀速传送带。</p>
+  <div class="two reveal">
+    <div>
+      <div class="code">
+<b>D(v)</b> = g·C<sub>rr</sub> + (ρ·C<sub>d</sub>A / 2m)·v² + g·i      <span class="dim">// 阻力，连续积分</span>
+<b>E(v)</b> = 1 / (1 + (v/v<sub>set</sub>)<i>⁶</i>) · clamp(1 − (v/18)², <u>0.15</u>, 1)
+<b>A₀</b>  = min(<u>2.6</u>, D(v<sub>set</sub>) / E(v<sub>set</sub>))     <span class="dim">// 解在设定点</span>
+
+owed += A₀·E(v)·dt
+<b>if</b> owed ≥ <i>0.85</i> <b>and</b> t − lastPush ≥ <i>0.42</i>s:
+    owed −= 0.85;  v += 0.85;  <u>蹬地动画触发</u>
+v += <s>−D(v)</s>·dt                <span class="dim">// 连续项只有阻力</span>
+      </div>
+      <div class="note ok">
+        <h4>为什么是六次方</h4>
+        <p>E(v) 需要在设定点附近有一个<strong>陡膝</strong>：低于设定速度时努力度≈1（少年在追速），高于时迅速→0（不再加速）。六次方让 v=0.8·v<sub>set</sub> 时 E≈0.79、v=1.2·v<sub>set</sub> 时 E≈0.26，过渡带只有 ±20%。后一项 (v/18)² 是<strong>体能天花板</strong>：18 m/s = 64.8 km/h 是冲刺极限，地板 0.15 保证再快也还有一点点蹬地，不会变成完全滑行。</p>
+      </div>
+      <div class="note">
+        <h4>负反馈的证明（不是调参调出来的）</h4>
+        <p>令 f(v) = A₀·E(v) − D(v)。E′(v) ≤ 0 且 D′(v) = 2·K<sub>air</sub>·v &gt; 0，所以 <strong>f′(v) &lt; 0 对所有 v&gt;0 成立</strong>：f 严格单调递减，最多一个零点；而 A₀ 的构造让 f(v<sub>set</sub>) = 0。故 v<sub>set</sub> 是<strong>唯一且全局稳定</strong>的不动点。离散交付只是把连续推力切成脉冲，长期均值不变。</p>
+      </div>
+    </div>
+    <div>
+      <div class="note bad">
+        <h4>已踩过的陷阱：推力被付了两次</h4>
+        <p>早先连续项写成 <span class="mono">a = A₀·E − D</span>，同时又 <span class="mono">v += 0.85</span>。平衡条件于是变成 <strong>2·A₀·E(v) = D(v)</strong>，实测设定 8 却稳定在 9.046（<strong>+13.08%</strong>）。右侧「连续项也加推力」开关可以当场复现这个错误——红色虚线就是被翻倍的推力曲线，交点右移。</p>
+      </div>
+      <div class="note warn">
+        <h4>失效边界一：A₀ 饱和</h4>
+        <p>A₀ 被 <span class="mono">A_CAP = 2.6 m/s²</span> 夹住（这是少年能持续输出的加速度）。当 v<sub>set</sub> &gt; <strong>10.8666 m/s</strong> 时 A₀ 触顶，推力不足以维持设定速度：设定 12 → 实际 11.403（−4.98%），设定 16 → 实际 12.599（<strong>−21.25%</strong>）。滑杆上限 16 是<strong>愿望</strong>，不是承诺。右侧读数会在触顶时亮红。</p>
+      </div>
+      <div class="note">
+        <h4>失效边界二：纵坡只重分配速度</h4>
+        <p>A₀ 按 i=0 解算，所以<strong>恒定</strong>上坡会破坏锚定（右侧纵坡滑杆可验证）。但真实路线是闭环，净爬升为零：上坡掉的速度下坡补回来。实测 150 s：均值 7.978（−0.27%），瞬时 6.828–9.198（纹波 29.6%），上坡均速 7.668 / 下坡 8.321，36.4 脚/分。<strong>长期锚定，短期呼吸</strong>——这正是想要的。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab reveal">
+    <div>
+      <div class="stage">
+        <span class="hint">v(t) · 最近 30 s · 单击画布 = 蹬地</span>
+        <div class="badge"><span class="tag" id="a-mode">离散交付</span><span class="tag ok" id="a-cap">A₀ 未触顶</span></div>
+        <canvas id="cvSpeed"></canvas>
+        <div class="readouts">
+          <div class="ro"><div class="k">当前速度</div><div class="v" id="a-v">8.00</div><div class="s">m/s</div></div>
+          <div class="ro"><div class="k">实测平衡</div><div class="v cy" id="a-eq">—</div><div class="s" id="a-err">收敛中</div></div>
+          <div class="ro"><div class="k">A₀</div><div class="v" id="a-a0">1.250</div><div class="s">m/s² · 上限 2.6</div></div>
+          <div class="ro"><div class="k">E(v)</div><div class="v gr" id="a-e">0.401</div><div class="s">努力度 0–1</div></div>
+          <div class="ro"><div class="k">蹬地频率</div><div class="v wn" id="a-rate">35.5</div><div class="s">脚/分</div></div>
+          <div class="ro"><div class="k">欠账 owed</div><div class="v" id="a-owed">0.00</div><div class="s">m/s · 满 0.85 出脚</div></div>
+        </div>
+      </div>
+      <div class="stage" style="margin-top:14px">
+        <span class="hint">力曲线 · 阻力 D(v) 与推力 A₀·E(v) 的交点就是平衡点</span>
+        <canvas id="cvForce"></canvas>
+      </div>
+    </div>
+    <div class="rail" id="railA">
+      <h4>控制台 A <span>9 滑杆 · 4 开关</span></h4>
+      <div class="grp">目标与体能</div>
+      <div class="ctl"><div class="lbl"><span>设定速度 v<sub>set</sub></span><b id="r-vset-v">8.0 m/s</b></div><input type="range" id="r-vset" min="4" max="16" step="0.1" value="8"></div>
+      <div class="ctl"><div class="lbl"><span>体重 m</span><b id="r-mass-v">55 kg</b></div><input type="range" id="r-mass" min="40" max="90" step="1" value="55"></div>
+      <div class="ctl"><div class="lbl"><span>滚阻 C<sub>rr</sub></span><b id="r-crr-v">0.012</b></div><input type="range" id="r-crr" min="0.004" max="0.03" step="0.001" value="0.012"></div>
+      <div class="ctl"><div class="lbl"><span>风阻 C<sub>d</sub>A</span><b id="r-cda-v">0.55 m²</b></div><input type="range" id="r-cda" min="0.2" max="1.2" step="0.01" value="0.55"></div>
+      <div class="ctl"><div class="lbl"><span>纵坡 i</span><b id="r-grade-v">0.0 %</b></div><input type="range" id="r-grade" min="-0.06" max="0.06" step="0.002" value="0"></div>
+      <div class="grp">离散交付</div>
+      <div class="ctl"><div class="lbl"><span>一脚冲量 J</span><b id="r-j-v">0.85 m/s</b></div><input type="range" id="r-j" min="0.3" max="2" step="0.05" value="0.85"></div>
+      <div class="ctl"><div class="lbl"><span>出脚冷却</span><b id="r-cd-v">0.42 s</b></div><input type="range" id="r-cd" min="0.15" max="1.2" step="0.01" value="0.42"></div>
+      <div class="ctl"><div class="lbl"><span>手动蹬地冲量</span><b id="r-mj-v">1.15 m/s</b></div><input type="range" id="r-mj" min="0.4" max="2.5" step="0.05" value="1.15"></div>
+      <div class="ctl"><div class="lbl"><span>制动阈值 ×v<sub>set</sub></span><b id="r-ba-v">1.35</b></div><input type="range" id="r-ba" min="1.1" max="1.8" step="0.01" value="1.35"></div>
+      <div class="grp">显示与对照</div>
+      <label class="sw"><span>蹬地驱动（关 = 匀速）</span><input type="checkbox" id="t-drive" checked><span class="tr"></span></label>
+      <label class="sw"><span style="color:var(--danger)">连续项也加推力（陷阱）</span><input type="checkbox" id="t-trap"><span class="tr"></span></label>
+      <label class="sw"><span>±2% 收敛带</span><input type="checkbox" id="t-band" checked><span class="tr"></span></label>
+      <label class="sw"><span>蹬地刻度</span><input type="checkbox" id="t-mark" checked><span class="tr"></span></label>
+      <div class="btns">
+        <button class="pri wide" id="b-push">蹬地（或单击画布）</button>
+        <button id="b-resetA">重置</button><button id="b-randA">随机</button>
+        <button id="b-pngA">导出 PNG</button><button id="b-csvA">导出 CSV</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB B：侧倾与头部 ================= -->
+<section id="lean">
+  <p class="eyebrow reveal">Lab B · 【2】侧倾 + 【4】头部耦合</p>
+  <h2 class="reveal">躯干对齐有效重力，头对齐世界</h2>
+  <p class="lede reveal">稳态转弯里，"下"不是重力 g，而是 <strong>g<sub>eff</sub> = g + (−a<sub>离心</sub>)</strong>。躯干必须对齐 g<sub>eff</sub>，否则合力不通过板面接触线，人就翻了。头<strong>可以</strong>偏离这条线——颈部能施加力矩——但偏离不是免费的：它移动整体重心，并消耗颈部力矩预算。</p>
+  <div class="two reveal">
+    <div>
+      <h3>【4】头部三条真实机制</h3>
+      <div class="note">
+        <h4>① 前庭-颈反射（VCR）· 潜伏期 ~60–100 ms</h4>
+        <p>内耳感知头部在空间中的转动，经颈肌反射把 head 稳定住，潜伏期约 60–100 ms（<span class="tag info">文献量级设计取值</span>，本方案取 80 ms）。所以头相对躯干是<strong>一阶滞后</strong>，不是刚性同步。滞后让压弯入弯时头"慢半拍"，出弯时头"先回正"——这正是真人看起来的样子。</p>
+      </div>
+      <div class="note">
+        <h4>② 视线锚定 · 超前 0.3–0.5 s</h4>
+        <p>骑手先把头转向弯道顶点再压弯（ anticipatory gaze ）。取 0.35 s（<span class="tag info">设计取值</span>），在 8 m/s 时前视 <strong>2.8 m</strong>。侧倾的前视量则取 <span class="mono">clamp(v·0.67, 3, 12)</span> m——两者不同：视线看得更远更早，身体反应稍晚。</p>
+      </div>
+      <div class="note warn">
+        <h4>③ 头部质量参与重心 · 偏离由力矩买单</h4>
+        <p>头质量取体重 8% = <strong>4.4 kg</strong>，重心高 1.5 m。头相对躯干偏离 Δθ 时整体重心横移 (m<sub>h</sub>/m)·h·sin Δθ：<strong>5° → 1.05 cm，10° → 2.08 cm，15° → 3.11 cm，20° → 4.10 cm</strong>。板面接触斑半宽约 0.09 m，所以 15° 就吃掉了 <strong>34.5%</strong> 的稳定裕度。颈部力矩 τ = m<sub>h</sub>·|g<sub>eff</sub>|·d·sin(θ<sub>head</sub> − θ<sub>g_eff</sub>)，d = 0.12 m（寰枕关节到头部重心）。持续预算取 12 N·m（<span class="tag info">设计取值</span>）。</p>
+      </div>
+    </div>
+    <div>
+      <h3>【2】体能上限怎么体现</h3>
+      <div class="code">
+κ<sub>h</sub> = 水平投影曲率（纵坡不压弯）
+a<sub>lat</sub> = κ<sub>h</sub>·v²
+θ<sub>want</sub> = <b>atan</b>(a<sub>lat</sub> / g) · leanGain
+θ<sub>trunk</sub> = clamp(θ<sub>want</sub>, ±<u>leanMax</u>)
+θ<sub>head</sub> = LPF<sub>τ=80ms</sub>( θ<sub>trunk</sub>·(1 − <i>c</i>) )
+      </div>
+      <div class="note ok">
+        <h4>上限放宽，而不是把物理角乘大</h4>
+        <p>"身体素质非常好"落在 <span class="mono">leanMax = 0.52 rad = 29.79°</span>（横向 <strong>0.573 g</strong>）与 <span class="mono">leanGain = 1.0</span>（纯物理协调角）。普通骑手的舒适侧倾约 20–25°，末世少年放到 29.79°。gain 保持 1.0 意味着<strong>不伪造物理</strong>：想更夸张只能调 gain，但那会偏离协调角。</p>
+      </div>
+      <div class="note">
+        <h4>两个天花板正好互相咬合</h4>
+        <p>在最小半径 24.277 m 处，能完全协调（不被 clamp）的速度上限是 <strong>11.677 m/s</strong>；而速度控制器的 A₀ 饱和阈是 <strong>10.8666 m/s</strong>。也就是说<strong>控制器先触顶，侧倾后触顶</strong>——正常玩法里少年永远不会出现"压不下去"的姿态。只有手动连续蹬地把速度顶过 11.7 m/s 才会看到 clamp 亮红，那是玩家自己造成的失控边缘。</p>
+      </div>
+      <div class="note bad">
+        <h4>atan 与线性的差</h4>
+        <p>v=14 / R=22：a<sub>lat</sub> = 8.909 m/s²（0.908 g），atan 给 <strong>42.24°</strong>，线性近似 θ≈a<sub>lat</sub>/g 给 <strong>52.03°</strong>——高估 9.8°。低速时两者几乎相同（v8/R24.277：15.04° vs 15.40°），所以这个错误只在高速暴露。右侧读数实时显示两者之差。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab reveal">
+    <div>
+      <div class="stage">
+        <span class="hint">后视 · 绕板面接触线压弯 · 单击画布 = 反向弯</span>
+        <div class="badge"><span class="tag" id="b-dir">右弯</span><span class="tag ok" id="b-clamp">未触上限</span></div>
+        <canvas id="cvRear"></canvas>
+        <div class="readouts">
+          <div class="ro"><div class="k">横向加速度</div><div class="v" id="b-alat">2.636</div><div class="s" id="b-ag">0.269 g</div></div>
+          <div class="ro"><div class="k">躯干侧倾</div><div class="v" id="b-trunk">15.04°</div><div class="s" id="b-want">物理角 15.04°</div></div>
+          <div class="ro"><div class="k">头部侧倾</div><div class="v cy" id="b-head">6.02°</div><div class="s" id="b-delta">Δθ 9.02°</div></div>
+          <div class="ro"><div class="k">重心横移</div><div class="v wn" id="b-com">1.88</div><div class="s" id="b-margin">cm · 裕度 20.9%</div></div>
+          <div class="ro"><div class="k">颈部力矩</div><div class="v gr" id="b-torque">1.39</div><div class="s">N·m · 预算 12</div></div>
+          <div class="ro"><div class="k">atan − 线性</div><div class="v rd" id="b-err">−0.36°</div><div class="s">线性近似的误差</div></div>
+        </div>
+      </div>
+      <div class="stage" style="margin-top:14px">
+        <span class="hint">俯视 · 视线超前 v·0.35 s 指向弯道顶点</span>
+        <canvas id="cvTop"></canvas>
+      </div>
+    </div>
+    <div class="rail" id="railB">
+      <h4>控制台 B <span>10 滑杆 · 5 开关</span></h4>
+      <div class="grp">工况</div>
+      <div class="ctl"><div class="lbl"><span>速度 v</span><b id="r-bv-v">8.0 m/s</b></div><input type="range" id="r-bv" min="2" max="18" step="0.1" value="8"></div>
+      <div class="ctl"><div class="lbl"><span>弯道半径 R</span><b id="r-br-v">24.3 m</b></div><input type="range" id="r-br" min="12" max="120" step="0.1" value="24.277"></div>
+      <div class="ctl"><div class="lbl"><span>侧倾增益 gain</span><b id="r-bg-v">1.00</b></div><input type="range" id="r-bg" min="0" max="2.5" step="0.05" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>体能上限 leanMax</span><b id="r-bl-v">29.8°</b></div><input type="range" id="r-bl" min="0.15" max="0.9" step="0.01" value="0.52"></div>
+      <div class="grp">头部耦合</div>
+      <div class="ctl"><div class="lbl"><span>稳定系数 c</span><b id="r-bc-v">0.60</b></div><input type="range" id="r-bc" min="0" max="1" step="0.02" value="0.6"></div>
+      <div class="ctl"><div class="lbl"><span>VCR 潜伏期</span><b id="r-blag-v">80 ms</b></div><input type="range" id="r-blag" min="0" max="300" step="5" value="80"></div>
+      <div class="ctl"><div class="lbl"><span>视线超前</span><b id="r-bgz-v">0.35 s</b></div><input type="range" id="r-bgz" min="0" max="0.8" step="0.01" value="0.35"></div>
+      <div class="grp">姿态</div>
+      <div class="ctl"><div class="lbl"><span>蹲伏 crouch</span><b id="r-bcr-v">0.22</b></div><input type="range" id="r-bcr" min="0" max="0.5" step="0.01" value="0.22"></div>
+      <div class="ctl"><div class="lbl"><span>起伏幅度 bob</span><b id="r-bbob-v">0.012 m</b></div><input type="range" id="r-bbob" min="0" max="0.06" step="0.002" value="0.012"></div>
+      <div class="ctl"><div class="lbl"><span>起伏频率</span><b id="r-bbf-v">2.0 Hz</b></div><input type="range" id="r-bbf" min="0.4" max="4" step="0.1" value="2"></div>
+      <div class="grp">矢量与参考</div>
+      <label class="sw"><span>有效重力 g<sub>eff</sub></span><input type="checkbox" id="t-geff" checked><span class="tr"></span></label>
+      <label class="sw"><span>重心与接触斑</span><input type="checkbox" id="t-com" checked><span class="tr"></span></label>
+      <label class="sw"><span>视线射线</span><input type="checkbox" id="t-gaze" checked><span class="tr"></span></label>
+      <label class="sw"><span>直立参考（虚影）</span><input type="checkbox" id="t-ghost" checked><span class="tr"></span></label>
+      <label class="sw"><span>颈部力矩弧</span><input type="checkbox" id="t-neck" checked><span class="tr"></span></label>
+      <div class="btns">
+        <button class="pri wide" id="b-flip">切换左 / 右弯</button>
+        <button id="b-resetB">重置</button><button id="b-randB">随机</button>
+        <button class="wide" id="b-pngB">导出 PNG（后视 + 俯视）</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB C：路线随机化 ================= -->
+<section id="route">
+  <p class="eyebrow reveal">Lab C · 路线随机化 · 右转闸门</p>
+  <h2 class="reveal">不自穿是构造出来的，不是抽样抽出来的</h2>
+  <p class="lede reveal">中心线用<strong>星形极坐标闭合环</strong>：R(u) = R₀·(1 + Σ a<sub>k</sub>·sin(k·u + φ<sub>k</sub>))，约束 Σ|a<sub>k</sub>| ≤ 0.40 ⇒ R(u) &gt; 0 恒成立 ⇒ 从原点出发的每条射线只穿过曲线一次 ⇒ <strong>水平投影不自交是数学保证</strong>。整数谐波让 u=0 与 u=2π 的位置和各阶导数精确闭合，接缝处不会跳。</p>
+  <div class="two reveal">
+    <div>
+      <div class="code">
+k=1 <s>缺席</s>   <span class="dim">// 一次谐波只是平移，不产生弯</span>
+k=2 <b>椭圆化</b>  a ∈ [0.08, 0.16]
+k=3 <b>非凸</b>    a ∈ [0.10, 0.15]  <span class="dim">// 反号曲率的来源</span>
+k=4 <b>细节</b>    a ∈ [0.010, 0.035]
+R₀ 由二分解锁到 L = <u>295 m</u>（灯距整除、圈速、内存都挂在 L 上）
+弧长表 NSAMP=2048 → M = round(L/0.25) → <b>STEP = L/M</b>
+      </div>
+      <div class="note ok">
+        <h4>STEP 必须反解，不能写死</h4>
+        <p>写死 <span class="mono">STEP = 0.25</span> 会让 M 个 0.25 与真实 L 差 <strong>0.014 m</strong>，接缝处采样落在错误的环上。反解 <span class="mono">STEP = L/M</span> 后 s=L 精确映回环 0。这是上一轮修掉的一个潜伏缺陷。</p>
+      </div>
+      <div class="note">
+        <h4>符号约定：正 = 右转</h4>
+        <p><span class="mono">cross(T, dT)·[0,1,0] ≥ 0</span> 为正。解析验证：u=0 处 T=(1,0,0)，R=cross(U,T)=(0,0,−1)，dT ∝ (0,0,−1) = +R，所以正号确实指向画面右。作者要求"有右转的地方"，闸门因此强制<strong>左右弯各 ≥2 段、每段 ≥12 m</strong>，而不是只看总曲率。</p>
+      </div>
+    </div>
+    <div>
+      <div class="note warn">
+        <h4>闸门与实测通过率</h4>
+        <p>200 个种子扫描：最小半径 ≥22 m 通过 <strong>67%</strong>，≥26 m 通过 <strong>0%</strong>——最小半径是<strong>唯一的紧约束</strong>，且紧弯全是右弯（右弯中位 R 22.9 m，左弯中位 30.9 m）。纵坡 ≤4.5% 通过 47%，双向弯各 ≥2 段通过 74%。三条合起来 <strong>21.5%</strong>，平均 <strong>4.7 次</strong>尝试命中，所以拒绝采样是廉价的。</p>
+      </div>
+      <div class="note bad">
+        <h4>失效边界：这不是合规线形</h4>
+        <p>R = 22 m 仍是《公路路线设计规范》高速极限最小半径的约 <strong>1/11</strong>。这是为了在 ~35 m 雾深内<strong>看得见弯</strong>而故意压缩的。旧 Fourier 路线的纵坡达 |t<sub>y</sub>| = 0.196（<strong>11.3° / 20%</strong>），那是任何高速隧道都不可能的坡度，新闸门把它压到 4.5% 以内（种子 137 实测 4.062%）。</p>
+      </div>
+      <div class="note">
+        <h4>星形只保证水平不自交</h4>
+        <p>两条相隔很远的弧仍可能靠到 2·RAD 以内，所以运行时<strong>真量一遍</strong>非邻近段最小间距（守卫 14 m，步长 4）。闸门要求 ≥ 2·RAD+2 = <strong>8.3 m</strong>；种子 137 实测 <strong>13.811 m</strong>，余量 66%。下面画布会把任何违规段标红。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab reveal">
+    <div>
+      <div class="stage">
+        <span class="hint">俯视中心线 · 橙 = 右转 · 青 = 左转 · 白点 = 少年</span>
+        <div class="badge"><span class="tag ok" id="c-tries">2 次命中</span></div>
+        <canvas id="cvRoute"></canvas>
+        <div class="readouts">
+          <div class="ro"><div class="k">周长 L</div><div class="v" id="c-l">295.001</div><div class="s" id="c-step">m · STEP 0.25000</div></div>
+          <div class="ro"><div class="k">最小半径</div><div class="v" id="c-minr">24.277</div><div class="s" id="c-minrs">右 24.28 / 左 48.15</div></div>
+          <div class="ro"><div class="k">最大纵坡</div><div class="v gr" id="c-grade">4.062</div><div class="s">% · 闸门 ≤4.5</div></div>
+          <div class="ro"><div class="k">右 / 左弯段</div><div class="v cy" id="c-runs">2 / 2</div><div class="s" id="c-runlen">263.3 / 31.8 m</div></div>
+          <div class="ro"><div class="k">非邻近间距</div><div class="v" id="c-sep">13.811</div><div class="s">m · 闸门 ≥8.3</div></div>
+          <div class="ro"><div class="k">高差 ΔY</div><div class="v wn" id="c-dy">1.632</div><div class="s">m · 闭环净爬升 0</div></div>
+        </div>
+      </div>
+      <div class="gates" id="c-gates"></div>
+    </div>
+    <div class="rail" id="railC">
+      <h4>控制台 C <span>7 滑杆 · 5 开关</span></h4>
+      <div class="grp">种子与族</div>
+      <div class="ctl"><div class="lbl"><span>路线种子</span><b id="r-seed-v">137</b></div><input type="range" id="r-seed" min="1" max="99999" step="1" value="137"></div>
+      <div class="ctl"><div class="lbl"><span>目标周长</span><b id="r-len-v">295 m</b></div><input type="range" id="r-len" min="240" max="360" step="1" value="295"></div>
+      <div class="ctl"><div class="lbl"><span>k=2 椭圆化 ×</span><b id="r-h2-v">1.00</b></div><input type="range" id="r-h2" min="0.3" max="1.6" step="0.02" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>k=3 非凸 ×</span><b id="r-h3-v">1.00</b></div><input type="range" id="r-h3" min="0.3" max="1.6" step="0.02" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>k=4 细节 ×</span><b id="r-h4-v">1.00</b></div><input type="range" id="r-h4" min="0" max="2.5" step="0.05" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>纵坡幅度 ×</span><b id="r-va-v">1.00</b></div><input type="range" id="r-va" min="0" max="2" step="0.05" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>巡线速度</span><b id="r-cv-v">8.0 m/s</b></div><input type="range" id="r-cv" min="2" max="16" step="0.1" value="8"></div>
+      <div class="grp">显示</div>
+      <label class="sw"><span>曲率着色</span><input type="checkbox" id="t-curv" checked><span class="tr"></span></label>
+      <label class="sw"><span>间距违规标红</span><input type="checkbox" id="t-sep" checked><span class="tr"></span></label>
+      <label class="sw"><span>少年与航向</span><input type="checkbox" id="t-rider" checked><span class="tr"></span></label>
+      <label class="sw"><span>网格与比例尺</span><input type="checkbox" id="t-grid" checked><span class="tr"></span></label>
+      <label class="sw"><span>极值标注</span><input type="checkbox" id="t-label" checked><span class="tr"></span></label>
+      <div class="btns">
+        <button class="pri wide" id="b-reseed">重扫（过闸门为止）</button>
+        <button id="b-resetC">重置</button><button id="b-randC">随机</button>
+        <button id="b-svgC">导出 SVG</button><button id="b-pngC">导出 PNG</button>
+      </div>
+      <p class="small dim" style="margin:12px 0 0">振幅倍率会改变曲线族；壁纸出厂值固定为 1.00，同一 seed 永远给同一条路。倍率 ≠ 1 时闸门可能不过，画布会如实标红。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 程序化骨架 ================= -->
+<section id="rig">
+  <p class="eyebrow reveal">【1】程序化骨架 · M1–M4 · 示意，未实装</p>
+  <h2 class="reveal">骨骼链是契约，里程碑是验收门</h2>
+  <p class="lede reveal">路线 A 已批准：不引入外部模型，关节链、蒙皮、IK 全部由代码生成。下面是一个<strong>可操作的二维示意</strong>，用来确认关节层级、IK 目标与里程碑切分——它不进入壁纸包。<strong>【5】里程碑执行顺序待作者告知，本轮不实装。</strong></p>
+  <div class="lab reveal">
+    <div>
+      <div class="stage">
+        <span class="hint">侧视示意 · 点里程碑卡切换层级 · 橙 = 本阶段新增</span>
+        <div class="badge"><span class="tag warn" id="d-mile">M1 骨架与侧倾</span></div>
+        <canvas id="cvRig"></canvas>
+        <div class="readouts">
+          <div class="ro"><div class="k">关节数</div><div class="v" id="d-joints">9</div><div class="s" id="d-bones">8 骨段</div></div>
+          <div class="ro"><div class="k">IK 目标</div><div class="v cy" id="d-ik">2</div><div class="s">双脚 on board</div></div>
+          <div class="ro"><div class="k">重心高度</div><div class="v gr" id="d-comh">0.98</div><div class="s">m · 蹲伏后</div></div>
+          <div class="ro"><div class="k">蹬地相位</div><div class="v wn" id="d-phase">0.00</div><div class="s">0 = 收腿 / 0.35 = 触地</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="rail" id="railD">
+      <h4>控制台 D <span>示意查看器</span></h4>
+      <div class="grp">里程碑</div>
+      <div class="seg" id="d-seg">
+        <button data-m="1" class="on">M1</button><button data-m="2">M2</button><button data-m="3">M3</button><button data-m="4">M4</button>
+      </div>
+      <div class="grp">姿态</div>
+      <div class="ctl"><div class="lbl"><span>侧倾角</span><b id="r-dlean-v">15.0°</b></div><input type="range" id="r-dlean" min="-30" max="30" step="0.5" value="15"></div>
+      <div class="ctl"><div class="lbl"><span>蹲伏</span><b id="r-dcrouch-v">0.22</b></div><input type="range" id="r-dcrouch" min="0" max="0.5" step="0.01" value="0.22"></div>
+      <div class="ctl"><div class="lbl"><span>头部稳定 c</span><b id="r-dcouple-v">0.60</b></div><input type="range" id="r-dcouple" min="0" max="1" step="0.02" value="0.6"></div>
+      <div class="ctl"><div class="lbl"><span>蹬地速度</span><b id="r-dpush-v">1.0 ×</b></div><input type="range" id="r-dpush" min="0" max="2.5" step="0.05" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>骨段粗细</span><b id="r-dw-v">1.0 ×</b></div><input type="range" id="r-dw" min="0.4" max="2.4" step="0.05" value="1"></div>
+      <div class="ctl"><div class="lbl"><span>轮廓光强度</span><b id="r-drim-v">0.85</b></div><input type="range" id="r-drim" min="0" max="1.5" step="0.05" value="0.85"></div>
+      <div class="ctl"><div class="lbl"><span>视图缩放</span><b id="r-dzoom-v">1.00 ×</b></div><input type="range" id="r-dzoom" min="0.6" max="1.8" step="0.02" value="1"></div>
+      <div class="grp">显示</div>
+      <label class="sw"><span>关节名</span><input type="checkbox" id="t-dlabel" checked><span class="tr"></span></label>
+      <label class="sw"><span>IK 目标与解算</span><input type="checkbox" id="t-dik" checked><span class="tr"></span></label>
+      <label class="sw"><span>重心投影</span><input type="checkbox" id="t-dcom" checked><span class="tr"></span></label>
+      <label class="sw"><span>播放蹬地</span><input type="checkbox" id="t-dplay" checked><span class="tr"></span></label>
+      <div class="btns">
+        <button class="pri wide" id="b-dstep">单步蹬地相位</button>
+        <button id="b-resetD">重置</button><button id="b-randD">随机</button>
+        <button class="wide" id="b-pngD">导出 PNG</button>
+      </div>
+    </div>
+  </div>
+  <div class="mile" id="mileCards">
+    <div class="mcard on reveal" data-m="1"><div class="id">M1</div><h3>骨架与侧倾</h3>
+      <ul><li>root → board → pelvis → spine1 → spine2 → chest → neck → head</li><li>绕板面接触线施加 θ<sub>trunk</sub></li><li>剪影蒙皮 + 轮廓光</li><li>与现有物理侧倾对接</li></ul>
+      <div class="acc">验收：侧倾角与 atan(κ<sub>h</sub>v²/g) 误差 &lt;0.5°；接缝处姿态连续</div></div>
+    <div class="mcard reveal" data-m="2"><div class="id">M2</div><h3>腿与蹬地 IK</h3>
+      <ul><li>hip → knee → ankle → toe ×2</li><li>双骨 IK，脚目标锁在板面</li><li>蹬地相位：收腿 → 后伸触地 → 回收</li><li>由离散出脚事件驱动，非周期计时器</li></ul>
+      <div class="acc">验收：脚掌不穿板、不穿地；蹬地时刻与 pushN 一一对应</div></div>
+    <div class="mcard reveal" data-m="3"><div class="id">M3</div><h3>臂与头部链</h3>
+      <ul><li>clavicle → upperArm → foreArm → hand ×2</li><li>平衡臂：随侧倾反向展开</li><li>head 独立链：VCR 滞后 + 视线超前</li><li>颈部力矩预算约束 Δθ</li></ul>
+      <div class="acc">验收：头滞后 80±20 ms；Δθ 引起的重心横移被躯干补偿</div></div>
+    <div class="mcard reveal" data-m="4"><div class="id">M4</div><h3>次级运动与 LOD</h3>
+      <ul><li>衣摆 / 背包带 / 发梢的弹簧质点</li><li>轮廓光随灯色与死灯状态变化</li><li>三档 LOD：满配 / 减骨段 / 剪影</li><li>省电模式下冻结次级运动</li></ul>
+      <div class="acc">验收：Q3 档 draw call 不增；省电时次级运动完全静止</div></div>
+  </div>
+  <div class="note warn reveal" style="margin-top:20px">
+    <h4>本轮边界</h4>
+    <p>当前壁纸包里的人物仍是 v4 的剪影 + 物理侧倾。<strong>蹬地与压弯已经作用于速度与侧倾</strong>（Lab A / Lab B 就是实装的那套数学），但尚未作用于骨骼——那要等 M1–M4 的执行顺序。示意图里的 IK 是本方案的<strong>设计验证</strong>，不是已交付的运行时。</p>
+  </div>
+</section>
+
+<!-- ================= 末世美术 ================= -->
+<section id="art">
+  <p class="eyebrow reveal">世界观 → 美术方向</p>
+  <h2 class="reveal">荒废不是调暗，是失效</h2>
+  <p class="lede reveal">"灾变后末世"不能靠把画面调暗来表达。暗只是曝光低；<strong>荒废是系统不再工作</strong>：灯成段熄灭而不是整体变暗，海报被撕开而不是褪色，瓦砾堆在路侧而不是均匀撒噪点，墙上留着幸存者写给下一个人的话。</p>
+  <div class="two reveal">
+    <div>
+      <div class="note bad">
+        <h4>死灯：回路级故障，三处同时归零</h4>
+        <p>不是每盏灯独立掷硬币，而是<strong>成段熄灭</strong>（一段 1–5 盏，模拟回路故障）。一盏死灯必须同时从三个地方消失：肋实例色 → <span class="mono">0.035</span>、辉光顶点色 → 黑（加色混合下零贡献）、点光源只挂在活肋上。少杀一处，灯就只是"变暗"而不是"坏了"。另有 10%·decay 的<strong>濒死灯</strong>在闪烁。实测种子 137 / decay 0.72：<strong>19/33 盏死灯（57.6%）</strong>。</p>
+      </div>
+      <div class="note">
+        <h4>海报：风化 + 幸存者喷涂</h4>
+        <p>图集 3 列 × 4 行 = 768×1536。风化在<strong>烘焙期</strong>做：褪色填充、<span class="mono">destination-out</span> 撕角、9 团霉斑、5 道垂直水渍。运行时滑杆只驱动自发光衰减、死灯比例与瓦砾数量——拖动滑杆时重烘一张 768×1536 图集要几十毫秒，不能每帧做。第 9–11 格是幸存者覆盖层：<strong>出口箭头 +「出口 / 300 m」</strong>、<strong>四组计数刻痕 +「有人吗 / 第 41 天 / 往东别走回头」</strong>、<strong>黄色三角 +「塌 方」+ 警示斜条</strong>。实测 33 张海报。</p>
+      </div>
+    </div>
+    <div>
+      <div class="note warn">
+        <h4>瓦砾：构造上避开骑行线</h4>
+        <p>二十面体实例，横向位置 <span class="mono">|x| ∈ [0.70, 0.97]·WF</span>，而少年在 x≈0——<strong>骑行线永远干净</strong>，不需要碰撞检测。尺寸 <span class="mono">0.10 + 0.34·r<sup>1.7</sup></span>（幂律让大多数是小碎块、少数是大塌落）。数量 <span class="mono">min(260, RIB_N·3.4·decay)</span>，实测 <strong>81 块</strong>。decay=0 时完全消失，画面回到灾变前。</p>
+      </div>
+      <div class="note ok">
+        <h4>三个预设 = 三个时间点</h4>
+        <p><strong>荒废高速·钠灯穿山隧道</strong>（decay 0.72，现在）／<strong>应急回路·冷白管廊段</strong>（decay 0.55，应急灯还活着的那一段）／<strong>灾变前·霓虹下穿道</strong>（decay 0.30，记忆里的样子）。同一条路线、同一个种子，只换灯色与荒废度——世界观因此有了纵深，而不是三张不相干的图。</p>
+      </div>
+    </div>
+  </div>
+  <h3 class="reveal" style="margin-top:30px">色板 · 点击复制</h3>
+  <p class="small reveal" style="color:var(--ink-faint)">全部取自隧道本身：钠灯、应急回路、出口标识、铁锈、警示漆、混凝土、沥青。暖色交给灯，混凝土只保留真实反照率量级。</p>
+  <div class="swatches reveal" id="swatches"></div>
+</section>
+
+<!-- ================= 实测台账 ================= -->
+<section id="ledger">
+  <p class="eyebrow reveal">Measured ledger · 口径与失效边界</p>
+  <h2 class="reveal">每个数字都有出处，每个断言都有边界</h2>
+  <p class="lede reveal">下表区分三类：<span class="tag ok">本机实测</span> 在这台机器上跑出来的；<span class="tag info">设计取值</span> 文献量级、未经本机验证；<span class="tag warn">构造保证</span> 由数学而非抽样得出。</p>
+  <div class="tblwrap reveal">
+    <table class="tbl">
+      <thead><tr><th>项</th><th>值</th><th>口径</th><th>失效边界</th></tr></thead>
+      <tbody>
+        <tr><td>帧率 / CPU</td><td class="n">60.02 fps / 0.60 ms</td><td><span class="tag ok">实测</span> 无头 Edge 1600×1000，dpr 1</td><td class="b">挂桌面、开其他 GPU 负载后会掉；自动阶梯按实测帧周期而非绝对毫秒判档</td></tr>
+        <tr><td>绘制 / 三角</td><td class="n">15 call / 24 646 tri</td><td><span class="tag ok">实测</span> renderer.info，钠灯预设 Q0</td><td class="b">换预设或 decay 会改变瓦砾与死灯数量，call 数不变（实例化）</td></tr>
+        <tr><td>闭环周长</td><td class="n">295.0006 m</td><td><span class="tag ok">实测</span> 种子 137，NSAMP 2048</td><td class="b">目标 295，二分 24 次；STEP=L/M 反解，接缝误差 0</td></tr>
+        <tr><td>最小半径</td><td class="n">右 24.277 / 左 48.155 m</td><td><span class="tag ok">实测</span> 水平投影曲率极值</td><td class="b">闸门 ≥22 m；22 m 仍是高速极限最小半径的约 1/11，为雾深内可见而压缩</td></tr>
+        <tr><td>最大纵坡</td><td class="n">4.062 %</td><td><span class="tag ok">实测</span> max|t<sub>y</sub>|</td><td class="b">闸门 ≤4.5%；旧 Fourier 路线曾达 20%（11.3°），不可能</td></tr>
+        <tr><td>左右弯段</td><td class="n">2 / 2 段 · 263.25 / 31.75 m</td><td><span class="tag ok">实测</span> 符号游程，跨接缝合并</td><td class="b">每段 ≥12 m 才计数；短于 12 m 的抖动不算弯</td></tr>
+        <tr><td>非邻近间距</td><td class="n">13.811 m</td><td><span class="tag ok">实测</span> 守卫 14 m，步长 4</td><td class="b">闸门 ≥8.3 m = 2·RAD+2；星形只保证水平不自交，间距仍须真量</td></tr>
+        <tr><td>闸门通过率</td><td class="n">21.5 % · 平均 4.7 次</td><td><span class="tag ok">实测</span> 200 种子，窗口 B</td><td class="b">minR ≥26 m 时通过率 0%——最小半径是唯一紧约束</td></tr>
+        <tr><td>水平不自交</td><td class="n">R(u) &gt; 0 恒成立</td><td><span class="tag warn">构造</span> Σ|a<sub>k</sub>| ≤ 0.40</td><td class="b">仅水平投影；竖直方向由间距闸门兜底</td></tr>
+        <tr><td>K<sub>air</sub> / D(8)</td><td class="n">0.006 / 0.50172 m/s²</td><td><span class="tag warn">构造</span> ρ1.2·CdA0.55/(2·55)</td><td class="b">CdA 0.55 是蹲伏剪影的估计值，非风洞实测</td></tr>
+        <tr><td>A₀(8) / E(8,8)</td><td class="n">1.25044 / 0.40123</td><td><span class="tag warn">构造</span> 解在设定点</td><td class="b">A₀ 按 i=0 解；恒定坡道会破坏锚定，闭环净爬升为零则不会</td></tr>
+        <tr><td>平衡误差（定步长）</td><td class="n">+0.05 % @ set 8</td><td><span class="tag ok">实测</span> 240 s，dt=1/120，i=0</td><td class="b">set 4→+0.10%，set 10→+0.03%；set 16→−21.25%（A₀ 触顶）</td></tr>
+        <tr><td>A₀ 饱和阈</td><td class="n">10.8666 m/s</td><td><span class="tag ok">实测</span> 二分求解 A₀(v)=2.6</td><td class="b">超过此值设定速度是愿望不是承诺；set 12→11.403，set 14→12.123</td></tr>
+        <tr><td>真实路线纹波</td><td class="n">均值 7.978 · 6.828–9.198</td><td><span class="tag ok">实测</span> set 8，150 s，种子 137</td><td class="b">纹波 29.6%；上坡均速 7.668 / 下坡 8.321；36.4 脚/分</td></tr>
+        <tr><td>±2% 收敛时间</td><td class="n">7.84 s @ set 8</td><td><span class="tag ok">实测</span> 从 0.5·v<sub>set</sub> 起</td><td class="b">set 6→8.80 s，set 12→10.56 s；不是指数 τ，是进入带的时间</td></tr>
+        <tr><td>推力双付陷阱</td><td class="n">+13.08 % @ set 8</td><td><span class="tag ok">实测</span> 连续项也加 A₀·E</td><td class="b">平衡条件退化为 2·A₀·E=D；set 6→+14.42%，set 10→+11.80%</td></tr>
+        <tr><td>蹬地频率</td><td class="n">35.5 脚/分 @ set 8</td><td><span class="tag warn">构造</span> J/D(v) = 0.85/0.50172</td><td class="b">set 4→15.1/min，set 16→75.6/min；冷却 0.42 s 在 set≤16 时不绑定</td></tr>
+        <tr><td>侧倾上限</td><td class="n">0.52 rad = 29.79°</td><td><span class="tag info">设计</span> 横向 0.573 g</td><td class="b">R<sub>min</sub> 24.277 处完全协调速度上限 11.677 m/s，高于控制器饱和阈</td></tr>
+        <tr><td>atan vs 线性</td><td class="n">42.24° vs 52.03°</td><td><span class="tag ok">实测</span> v14 / R22</td><td class="b">低速几乎相同（v8/R24.277：15.04° vs 15.40°），错误只在高速暴露</td></tr>
+        <tr><td>头质量 / 高度</td><td class="n">4.4 kg / 1.5 m</td><td><span class="tag info">设计</span> 体重 8%</td><td class="b">偏离 15°→重心横移 3.11 cm = 接触斑半宽 0.09 m 的 34.5%</td></tr>
+        <tr><td>VCR 潜伏期</td><td class="n">80 ms</td><td><span class="tag info">设计</span> 文献量级 60–100 ms</td><td class="b">未经本机验证；滑杆 0–300 ms 可探索，0 = 刚性同步（机器人感）</td></tr>
+        <tr><td>视线超前</td><td class="n">0.35 s → 2.8 m @ 8 m/s</td><td><span class="tag info">设计</span> 文献量级 0.3–0.5 s</td><td class="b">与侧倾前视 clamp(v·0.67,3,12) 不同：视线更早更远</td></tr>
+        <tr><td>颈部力矩预算</td><td class="n">12 N·m 持续</td><td><span class="tag info">设计</span> d=0.12 m</td><td class="b">默认配置 ~1.39 N·m；clamp 工况下升高，超预算应强制头回正</td></tr>
+        <tr><td>死灯 / 瓦砾 / 海报</td><td class="n">19/33 · 81 · 33</td><td><span class="tag ok">实测</span> decay 0.72，种子 137</td><td class="b">decay 扫描：死灯 0/0/13/20，瓦砾 0/34/81/112（0/0.3/0.72/1.0）</td></tr>
+        <tr><td>发布自检</td><td class="n">25 / 25</td><td><span class="tag ok">实测</span> 静态门 + 真跑门</td><td class="b">shipCheck 必须在 runtimeSmoke 之后调用，否则最后一门假失败</td></tr>
+        <tr><td>配置校验</td><td class="n">validate.py 退出 0</td><td><span class="tag ok">实测</span> Lively v2.2 反序列化口径</td><td class="b">控件 type 拼错会让整个属性文件失效；18 个键全部有回调分支</td></tr>
+        <tr><td>包体</td><td class="n">893 640 B · 7 条目</td><td><span class="tag ok">实测</span> store 法 ZIP + CRC32</td><td class="b">LivelyInfo.json 在根；index.html 816 116 B；Version 5</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 交付状态 ================= -->
+<section id="delivery">
+  <p class="eyebrow reveal">Delivery · 距离可交付还差哪几项</p>
+  <h2 class="reveal">我能清的，与只有你能做的</h2>
+  <div class="two reveal">
+    <div>
+      <h3 style="color:var(--ok)">本轮已清</h3>
+      <div class="note ok"><p>① 随机化路线：星形极坐标闭合环 + 四道闸门 + 拒绝采样，种子可换，左右弯都有。<br>② 末世化改造：回路级死灯（三处同时归零）、风化海报 + 幸存者喷涂、路侧瓦砾、三个时间点预设。<br>③ 负反馈速度控制器：离散蹬地交付，单击 +1.15 m/s、双击压弯，平衡误差 +0.05%。<br>④ 默认种子改到滑杆合法区间（137），发布自检回到 <strong>25/25</strong>。<br>⑤ 包与可导入根目录同步刷新，<span class="mono">validate.py</span> 退出 <strong>0</strong>，真跑冒烟 75 帧零报错。<br>⑥ 本方案 v2：四个可操作实验室，全部与壁纸同参。</p></div>
+      <h3 style="margin-top:22px;color:var(--warn)">我还能清（等你发话）</h3>
+      <div class="note warn"><p>· M1–M4 骨架实装——<strong>等你给执行顺序</strong>（【5】）。<br>· 命名与 Description 定稿（【6】）。<br>· 把头部耦合（Lab B 的 VCR + 视线 + 力矩预算）接进运行时——属于 M3。<br>· 若你要设定速度真能到 16 m/s，需要放宽 A_CAP 或降低 CdA，那是体能设定的改动，不是 bug。</p></div>
+    </div>
+    <div>
+      <h3 style="color:var(--emergency)">只有你能做</h3>
+      <div class="note"><p>① <strong>把 zip 拖进 Lively 库</strong>：web 工程不能由 CLI 导入，必须手动拖一次。<span class="mono">dist/infinite-tunnel-v5.zip</span>。<br>② <strong>桌面上验证单击蹬地 / 双击压弯</strong>：无头浏览器里我已验证指针事件能触发（pushN 6→7，v 7.99→9.08），但 Lively 把鼠标打到壁纸的真实手感只能你来判断。<br>③ <strong>暂停 / 多显示器 / 省电</strong>：宿主只挂起合成器，JS 不会停；页面已自行停工，但多屏与暂停恢复要在真机看。<br>④ <strong>更新后按「恢复默认」</strong>：存档在 <span class="mono">SaveData/wpdata</span>，改项目里的默认值不会生效。<br>⑤ <strong>审美裁决</strong>：死灯比例、瓦砾密度、喷涂文案、侧倾上限是否"太夸张"——这些是你的眼，不是我的数字。</p></div>
+      <div class="note bad"><h4>不要做的事</h4><p>不要把文件夹放在 Downloads 等临时位置：Lively 存的是指针，移动/改名会丢 origin 与存档。不要改已发布控件的键名：存档按键匹配，改名等于丢设置。</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <span>无限隧道 · 人物建模方案 v2 · 2026-11-13 · FX</span>
+  <span class="mono">灾变后末世 / 荒废高速穿山隧道 / 适应野外生存的少年</span>
+  <span class="mono" style="color:var(--sodium)">离线自包含 · 零外部资产 · 四个 live lab</span>
+</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   无限隧道 · 方案 v2 · 四个实验室
+   所有物理与路线数学与 src/scene.js 逐字同参
+   ===================================================================== */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const TAU = Math.PI * 2, G = 9.81;
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, t) => a + (b - a) * t;
+const f = (x, n) => Number(x).toFixed(n === undefined ? 2 : n);
+const DEG = 180 / Math.PI;
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+let toastT = 0;
+function toast(msg) {
+  const el = $('#toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2100);
+}
+function fit(cv) {
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+function download(name, blob) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+}
+function pngOf(cv, name) { cv.toBlob(b => { download(name, b); toast('已导出 ' + name); }, 'image/png'); }
+
+/* ---------- 控件绑定 ---------- */
+const syncers = [];
+function range(id, get, set, fmt) {
+  const el = $('#' + id), out = $('#' + id + '-v');
+  const paint = () => { if (out) out.textContent = fmt(get()); };
+  el.addEventListener('input', () => { set(parseFloat(el.value)); paint(); paintOnce(); });
+  el.value = get(); paint();
+  const s = { sync() { el.value = get(); paint(); } }; syncers.push(s); return s;
+}
+function toggle(id, get, set) {
+  const el = $('#' + id);
+  el.addEventListener('change', () => { set(el.checked); paintOnce(); });
+  el.checked = get();
+  const s = { sync() { el.checked = get(); } }; syncers.push(s); return s;
+}
+function syncAll() { syncers.forEach(s => s.sync()); paintOnce(); }
+/* 主循环只画视口内的实验室，所以控件动手时必须补画一次：
+   否则在窄屏把画面滚出视口后拖滑杆，读数会停在旧值。
+   合并到下一帧，避免拖动滑杆时每帧重画七张画布。 */
+let paintPending = false;
+function paintOnce() { paintPending = true; }
+
+/* =====================================================================
+   背景：后退的隧道环 + 尘埃 + 钠灯呼吸，色相随滚动迁移
+   ===================================================================== */
+const AM = { cv: $('#ambient'), t: 0, dust: [], hue: 32 };
+(function () {
+  const r = mulberry32(9);
+  for (let i = 0; i < 130; i++) AM.dust.push({ x: r(), y: r(), z: r(), s: 0.4 + r() * 1.5, v: 0.006 + r() * 0.02 });
+})();
+function drawAmbient(dt) {
+  const { ctx, w, h } = fit(AM.cv);
+  AM.t += dt;
+  const prog = clamp(window.scrollY / Math.max(1, document.body.scrollHeight - window.innerHeight), 0, 1);
+  AM.hue = lerp(32, 190, prog);
+  ctx.clearRect(0, 0, w, h);
+  const cx = w * 0.5, cy = h * 0.46;
+  const base = 'hsl(' + f(AM.hue, 0) + ',85%,62%)';
+  // 后退的环
+  const N = 26;
+  for (let i = N; i >= 1; i--) {
+    const p = ((i / N) + AM.t * 0.035) % 1;
+    const sc = Math.pow(p, 2.6);
+    const rw = w * 0.86 * sc, rh = h * 0.80 * sc;
+    const a = (1 - p) * 0.16 * (0.35 + 0.65 * sc);
+    ctx.strokeStyle = 'hsla(' + f(AM.hue, 0) + ',80%,60%,' + f(a, 3) + ')';
+    ctx.lineWidth = Math.max(0.5, 2.4 * sc);
+    ctx.beginPath();
+    // 马蹄形：上半拱 + 下沿
+    ctx.ellipse(cx, cy, rw, rh, 0, Math.PI, TAU);
+    ctx.lineTo(cx + rw, cy + rh * 0.42);
+    ctx.lineTo(cx - rw, cy + rh * 0.42);
+    ctx.closePath(); ctx.stroke();
+  }
+  // 中心辉光
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.42);
+  g.addColorStop(0, 'hsla(' + f(AM.hue, 0) + ',90%,66%,0.13)');
+  g.addColorStop(0.45, 'hsla(' + f(AM.hue, 0) + ',80%,50%,0.045)');
+  g.addColorStop(1, 'transparent');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  // 尘埃
+  for (const d of AM.dust) {
+    d.z -= d.v * dt; if (d.z <= 0.02) { d.z = 1; d.x = Math.random(); d.y = Math.random(); }
+    const sc = Math.pow(1 - d.z, 2.2);
+    const x = cx + (d.x - 0.5) * w * 1.5 * sc, y = cy + (d.y - 0.5) * h * 1.5 * sc;
+    const a = 0.30 * (1 - d.z);
+    ctx.fillStyle = 'hsla(' + f(AM.hue + 12, 0) + ',70%,78%,' + f(a, 3) + ')';
+    ctx.beginPath(); ctx.arc(x, y, d.s * (0.4 + sc * 1.6), 0, TAU); ctx.fill();
+  }
+  // 顶部灯带呼吸
+  const fl = 0.5 + 0.5 * Math.sin(AM.t * 0.7) * Math.sin(AM.t * 2.3);
+  ctx.fillStyle = 'hsla(' + f(AM.hue, 0) + ',90%,64%,' + f(0.05 + 0.05 * fl, 3) + ')';
+  ctx.fillRect(0, 0, w, 2);
+}
+
+/* =====================================================================
+   LAB A · 速度负反馈（与 scene.js 同参）
+   ===================================================================== */
+const A_CAP = 2.6, BRAKE_A = 1.2, RHO = 1.2;
+const SA = {
+  vset: 8, mass: 55, crr: 0.012, cda: 0.55, grade: 0, J: 0.85, cd: 0.42, mj: 1.15, ba: 1.35,
+  drive: true, trap: false, band: true, mark: true,
+  v: 4, owed: 0, t: 0, lastPush: -9, pushN: 0, flash: 0,
+  hist: [], eq: [], warm: 0, lastManual: -9
+};
+const kAir = () => RHO * SA.cda / (2 * SA.mass);
+const dragA = (v, i) => G * SA.crr + kAir() * v * v + G * (i || 0);
+const effortA = (v, vs) => (1 / (1 + Math.pow(v / Math.max(0.5, vs), 6))) * clamp(1 - (v / 18) * (v / 18), 0.15, 1);
+const a0A = vs => Math.min(A_CAP, dragA(vs, 0) / Math.max(1e-4, effortA(vs, vs)));
+function resetA(keepV) {
+  SA.v = keepV ? SA.v : SA.vset * 0.5; SA.owed = 0; SA.t = 0; SA.lastPush = -9; SA.pushN = 0;
+  SA.hist.length = 0; SA.eq.length = 0; SA.warm = 0; SA.lastManual = -9;
+}
+function manualPushA() {
+  if (SA.t - SA.lastManual < 0.18) { toast('蹬地冷却中（0.18 s）'); return false; }
+  SA.v += SA.mj; SA.owed = 0; SA.lastManual = SA.t; SA.lastPush = SA.t; SA.pushN++; SA.flash = 1;
+  SA.hist.push({ t: SA.t, v: SA.v, p: 2 });
+  return true;
+}
+function stepA(dt) {
+  SA.t += dt;
+  if (!SA.drive) { SA.v = SA.vset; SA.owed = 0; }
+  else {
+    const A0 = a0A(SA.vset), E = effortA(SA.v, SA.vset);
+    let a = SA.trap ? A0 * E - dragA(SA.v, SA.grade) : -dragA(SA.v, SA.grade);
+    if (SA.v > SA.ba * SA.vset) a -= BRAKE_A;
+    SA.owed += A0 * E * dt;
+    SA.v = Math.max(0.4, SA.v + a * dt);
+    if (SA.owed >= SA.J && SA.t - SA.lastPush >= SA.cd) {
+      SA.owed -= SA.J; SA.v += SA.J; SA.lastPush = SA.t; SA.pushN++; SA.flash = 1;
+      SA.hist.push({ t: SA.t, v: SA.v, p: 1 });
+    }
+  }
+  SA.flash = Math.max(0, SA.flash - dt / 0.55);
+  SA.warm += dt;
+  if (SA.warm > 10) { SA.eq.push(SA.v); if (SA.eq.length > 60 * 20) SA.eq.shift(); }
+}
+let aSample = 0;
+function recordA(dt) {
+  aSample += dt;
+  if (aSample >= 1 / 30) {
+    aSample = 0;
+    SA.hist.push({ t: SA.t, v: SA.v, p: 0 });
+    while (SA.hist.length && SA.hist[0].t < SA.t - 30) SA.hist.shift();
+  }
+}
+function drawSpeed() {
+  const { ctx, w, h } = fit($('#cvSpeed'));
+  ctx.clearRect(0, 0, w, h);
+  const L = 52, R = w - 16, T = 26, B = h - 30;
+  const vmax = Math.max(18, SA.vset * 1.5);
+  const X = t => L + (t - (SA.t - 30)) / 30 * (R - L);
+  const Y = v => B - (v / vmax) * (B - T);
+  // 网格
+  ctx.strokeStyle = 'rgba(201,189,164,.08)'; ctx.lineWidth = 1;
+  ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+  ctx.fillStyle = 'rgba(164,156,140,.65)';
+  for (let v = 0; v <= vmax; v += 4) {
+    const y = Y(v); ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke();
+    ctx.fillText(v + '', 14, y + 3);
+  }
+  for (let s = 0; s <= 30; s += 5) {
+    const x = X(SA.t - 30 + s); ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, B); ctx.stroke();
+    ctx.fillText((s - 30) + 's', x - 8, B + 16);
+  }
+  // ±2% 带
+  if (SA.band) {
+    ctx.fillStyle = 'rgba(125,220,138,.09)';
+    ctx.fillRect(L, Y(SA.vset * 1.02), R - L, Y(SA.vset * 0.98) - Y(SA.vset * 1.02));
+  }
+  // 设定线
+  ctx.strokeStyle = 'rgba(159,211,86,.75)'; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(L, Y(SA.vset)); ctx.lineTo(R, Y(SA.vset)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(159,211,86,.9)'; ctx.fillText('v_set ' + f(SA.vset, 1), R - 74, Y(SA.vset) - 6);
+  // 实测平衡线
+  if (SA.eq.length > 60) {
+    const eq = SA.eq.reduce((a, b) => a + b, 0) / SA.eq.length;
+    ctx.strokeStyle = 'rgba(63,227,255,.6)'; ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(L, Y(eq)); ctx.lineTo(R, Y(eq)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(63,227,255,.85)'; ctx.fillText('eq ' + f(eq, 3), L + 6, Y(eq) - 5);
+  }
+  // 蹬地刻度
+  if (SA.mark) for (const s of SA.hist) {
+    if (!s.p) continue;
+    const x = X(s.t); if (x < L || x > R) continue;
+    ctx.strokeStyle = s.p === 2 ? 'rgba(255,171,77,.85)' : 'rgba(255,171,77,.34)';
+    ctx.lineWidth = s.p === 2 ? 1.8 : 1;
+    ctx.beginPath(); ctx.moveTo(x, B); ctx.lineTo(x, B - (s.p === 2 ? 16 : 9)); ctx.stroke();
+  }
+  // v(t)
+  ctx.strokeStyle = '#ffab4d'; ctx.lineWidth = 2; ctx.beginPath();
+  let started = false;
+  for (const s of SA.hist) {
+    const x = X(s.t), y = Y(s.v); if (x < L - 2) continue;
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // 当前点
+  const cx = X(SA.t), cy = Y(SA.v);
+  if (SA.flash > 0) {
+    ctx.fillStyle = 'rgba(255,215,162,' + f(SA.flash * 0.3, 3) + ')';
+    ctx.beginPath(); ctx.arc(cx, cy, 8 + 16 * (1 - SA.flash), 0, TAU); ctx.fill();
+  }
+  ctx.fillStyle = '#ffd7a2'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,171,77,.5)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, 7.5, 0, TAU); ctx.stroke();
+  // 边框
+  ctx.strokeStyle = 'rgba(201,189,164,.2)'; ctx.strokeRect(L, T, R - L, B - T);
+}
+function drawForce() {
+  const { ctx, w, h } = fit($('#cvForce'));
+  ctx.clearRect(0, 0, w, h);
+  const L = 52, R = w - 16, T = 22, B = h - 30;
+  const VMAX = 18, AMAX = 3.2;
+  const X = v => L + v / VMAX * (R - L), Y = a => B - clamp(a, 0, AMAX) / AMAX * (B - T);
+  ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+  ctx.strokeStyle = 'rgba(201,189,164,.08)'; ctx.fillStyle = 'rgba(164,156,140,.6)';
+  for (let a = 0; a <= AMAX; a += 0.8) { const y = Y(a); ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(R, y); ctx.stroke(); ctx.fillText(f(a, 1), 18, y + 3); }
+  for (let v = 0; v <= VMAX; v += 3) { const x = X(v); ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, B); ctx.stroke(); ctx.fillText(v + '', x - 4, B + 15); }
+  const A0 = a0A(SA.vset);
+  const curve = (fn, color, dash, wid) => {
+    ctx.strokeStyle = color; ctx.lineWidth = wid || 2; ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    for (let i = 0; i <= 240; i++) { const v = i / 240 * VMAX; const x = X(v), y = Y(fn(v)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+  curve(v => dragA(v, SA.grade), '#ffab4d');
+  curve(v => A0 * effortA(v, SA.vset), '#3fe3ff');
+  if (SA.trap) curve(v => 2 * A0 * effortA(v, SA.vset), '#ff4d4d', [5, 4], 1.6);
+  // 交点
+  let eqv = null;
+  for (let i = 1; i <= 600; i++) {
+    const v0 = (i - 1) / 600 * VMAX, v1 = i / 600 * VMAX;
+    const g0 = A0 * effortA(v0, SA.vset) - dragA(v0, SA.grade), g1 = A0 * effortA(v1, SA.vset) - dragA(v1, SA.grade);
+    if (g0 >= 0 && g1 < 0) { eqv = lerp(v0, v1, g0 / (g0 - g1)); break; }
+  }
+  if (eqv !== null) {
+    ctx.strokeStyle = 'rgba(159,211,86,.8)'; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(X(eqv), T); ctx.lineTo(X(eqv), B); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#9fd356'; ctx.beginPath(); ctx.arc(X(eqv), Y(dragA(eqv, SA.grade)), 4, 0, TAU); ctx.fill();
+    ctx.fillText('平衡 ' + f(eqv, 2), X(eqv) + 7, T + 12);
+  }
+  // 当前 v
+  ctx.strokeStyle = 'rgba(255,215,162,.55)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(X(SA.v), T); ctx.lineTo(X(SA.v), B); ctx.stroke();
+  // 图例
+  const leg = [['阻力 D(v)', '#ffab4d'], ['推力 A₀·E(v)', '#3fe3ff']];
+  if (SA.trap) leg.push(['翻倍推力（陷阱）', '#ff4d4d']);
+  leg.forEach((l, i) => {
+    const x = L + 8 + i * 132; ctx.fillStyle = l[1]; ctx.fillRect(x, T - 14, 14, 3);
+    ctx.fillStyle = 'rgba(232,226,214,.8)'; ctx.fillText(l[0], x + 19, T - 9);
+  });
+  ctx.strokeStyle = 'rgba(201,189,164,.2)'; ctx.strokeRect(L, T, R - L, B - T);
+}
+function readA() {
+  const A0 = a0A(SA.vset), E = effortA(SA.v, SA.vset);
+  $('#a-v').textContent = f(SA.v, 2);
+  $('#a-a0').textContent = f(A0, 3);
+  $('#a-e').textContent = f(E, 3);
+  $('#a-owed').textContent = f(SA.owed, 2);
+  const cap = $('#a-cap');
+  if (A0 >= A_CAP - 1e-9) { cap.textContent = 'A₀ 已触顶 2.6'; cap.className = 'tag bad'; $('#a-a0').className = 'v rd'; }
+  else { cap.textContent = 'A₀ 未触顶'; cap.className = 'tag ok'; $('#a-a0').className = 'v'; }
+  $('#a-mode').textContent = SA.trap ? '陷阱：推力双付' : (SA.drive ? '离散交付' : '匀速（驱动关）');
+  $('#a-mode').className = SA.trap ? 'tag bad' : 'tag';
+  if (SA.eq.length > 60) {
+    const eq = SA.eq.reduce((a, b) => a + b, 0) / SA.eq.length;
+    const err = (eq / SA.vset - 1) * 100;
+    $('#a-eq').textContent = f(eq, 3);
+    $('#a-err').textContent = (err >= 0 ? '+' : '') + f(err, 2) + '% · ' + (SA.eq.length / 60 | 0) + 's 窗口';
+    $('#a-eq').className = 'v ' + (Math.abs(err) > 5 ? 'rd' : Math.abs(err) > 1 ? 'wn' : 'cy');
+  } else { $('#a-eq').textContent = '—'; $('#a-err').textContent = '收敛中 ' + f(Math.max(0, 10 - SA.warm), 1) + 's'; }
+  // 频率：最近 20 s 的出脚数
+  const recent = SA.hist.filter(s => s.p && s.t > SA.t - 20).length;
+  $('#a-rate').textContent = SA.drive ? f(recent / Math.min(20, Math.max(1, SA.t)) * 60, 1) : '0.0';
+}
+
+/* =====================================================================
+   LAB B · 侧倾与头部
+   ===================================================================== */
+const SB = {
+  v: 8, R: 24.277, dir: 1, gain: 1, leanMax: 0.52, couple: 0.6, lag: 80, gaze: 0.35,
+  crouch: 0.22, bob: 0.012, bobf: 2,
+  geff: true, com: true, gazeOn: true, ghost: true, neck: true,
+  t: 0, headRoll: 0, trunkRoll: 0, yaw: 0
+};
+const M_HEAD = 0.08, H_HEAD = 1.5, D_NECK = 0.12, PATCH = 0.09, NECK_BUDGET = 12;
+function resetB() { SB.headRoll = 0; SB.trunkRoll = 0; SB.yaw = 0; SB.t = 0; }
+function stepB(dt) {
+  SB.t += dt;
+  const k = SB.dir / SB.R, alat = k * SB.v * SB.v;
+  const want = Math.atan(alat / G) * SB.gain;
+  const trunk = clamp(want, -SB.leanMax, SB.leanMax);
+  SB.trunkRoll = trunk;
+  const target = trunk * (1 - SB.couple);
+  const tau = Math.max(0.001, SB.lag / 1000);
+  SB.headRoll += (target - SB.headRoll) * (1 - Math.exp(-dt / tau));
+  // 视线超前：头先转向顶点，yaw 用更快的一阶
+  const gz = Math.atan(SB.dir * SB.v * SB.gaze / SB.R);
+  SB.yaw += (gz - SB.yaw) * (1 - Math.exp(-dt / 0.12));
+}
+function drawRear() {
+  const { ctx, w, h } = fit($('#cvRear'));
+  ctx.clearRect(0, 0, w, h);
+  const k = SB.dir / SB.R, alat = k * SB.v * SB.v;
+  const geffAng = Math.atan(alat / G);
+  const want = geffAng * SB.gain, trunk = SB.trunkRoll, head = SB.headRoll;
+  const ground = h * 0.80, cx = w * 0.46;
+  const scale = h * 0.40 / 1.62;  // 1.62 m 身高
+  const bobY = Math.sin(SB.t * SB.bobf * TAU) * SB.bob * scale;
+  // 背景：隧道拱 + 路面
+  ctx.strokeStyle = 'rgba(201,189,164,.10)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(cx, ground - h * 0.30, w * 0.40, h * 0.44, 0, Math.PI, TAU); ctx.stroke();
+  const rg = ctx.createLinearGradient(0, ground, 0, h);
+  rg.addColorStop(0, 'rgba(28,33,38,.9)'); rg.addColorStop(1, 'rgba(8,10,12,.95)');
+  ctx.fillStyle = rg; ctx.fillRect(0, ground, w, h - ground);
+  ctx.strokeStyle = 'rgba(201,189,164,.22)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, ground); ctx.lineTo(w, ground); ctx.stroke();
+  // 钠灯辉光
+  const lg = ctx.createRadialGradient(cx - SB.dir * w * 0.3, ground - h * 0.62, 0, cx - SB.dir * w * 0.3, ground - h * 0.62, h * 0.5);
+  lg.addColorStop(0, 'rgba(255,171,77,.14)'); lg.addColorStop(1, 'transparent');
+  ctx.fillStyle = lg; ctx.fillRect(0, 0, w, h);
+  const rot = (x, y, ang, ox, oy) => {
+    const c = Math.cos(ang), s = Math.sin(ang), dx = x - ox, dy = y - oy;
+    return [ox + dx * c - dy * s, oy + dx * s + dy * c];
+  };
+  // 直立虚影
+  if (SB.ghost) {
+    ctx.strokeStyle = 'rgba(143,163,184,.22)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(cx, ground); ctx.lineTo(cx, ground - 1.62 * scale + bobY); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, ground - 1.56 * scale + bobY, 0.11 * scale, 0, TAU); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // 接触斑
+  const patchW = PATCH * 2 * scale;
+  if (SB.com) {
+    ctx.fillStyle = 'rgba(159,211,86,.16)';
+    ctx.fillRect(cx - patchW / 2, ground - 2, patchW, 5);
+    ctx.strokeStyle = 'rgba(159,211,86,.6)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - patchW / 2, ground + 5); ctx.lineTo(cx - patchW / 2, ground + 11);
+    ctx.moveTo(cx + patchW / 2, ground + 5); ctx.lineTo(cx + patchW / 2, ground + 11);
+    ctx.moveTo(cx - patchW / 2, ground + 8); ctx.lineTo(cx + patchW / 2, ground + 8); ctx.stroke();
+  }
+  // 板（随躯干倾斜 0.85）
+  const boardAng = trunk * 0.85;
+  ctx.save(); ctx.translate(cx, ground + bobY * 0.3); ctx.rotate(boardAng);
+  ctx.fillStyle = '#1a1d21'; ctx.strokeStyle = 'rgba(255,171,77,.5)'; ctx.lineWidth = 1.4;
+  const bl = 0.82 * scale;
+  ctx.beginPath(); ctx.roundRect(-bl / 2, -0.05 * scale, bl, 0.05 * scale, 3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(201,189,164,.4)';
+  ctx.beginPath(); ctx.arc(-bl * 0.3, 0.02 * scale, 0.035 * scale, 0, TAU); ctx.arc(bl * 0.3, 0.02 * scale, 0.035 * scale, 0, TAU); ctx.fill();
+  ctx.restore();
+  // 身体关键点（局部坐标，y 向上为负）
+  const cr = SB.crouch;
+  const hipY = -(0.86 - cr * 0.30) * scale, chestY = -(1.24 - cr * 0.34) * scale;
+  const neckY = -(1.40 - cr * 0.36) * scale, headY = -(1.52 - cr * 0.36) * scale;
+  const P = (x, y) => rot(cx + x, ground + y + bobY, trunk, cx, ground + bobY * 0.3);
+  const hip = P(0, hipY), chest = P(0, chestY), neck = P(0, neckY);
+  // 头用自己的 roll（相对世界），所以先取颈位置再独立旋转
+  const headC = rot(neck[0], neck[1] - 0.12 * scale, head, neck[0], neck[1]);
+  // 腿
+  const feet = [[-0.18 * scale, -0.05 * scale], [0.20 * scale, -0.05 * scale]];
+  ctx.strokeStyle = '#0a0a0c'; ctx.lineCap = 'round';
+  const lw = Math.max(3, 0.085 * scale);
+  for (const ft of feet) {
+    const foot = rot(cx + ft[0], ground + ft[1] + bobY * 0.3, boardAng, cx, ground + bobY * 0.3);
+    const knee = P(ft[0] * 0.5 + 0.06 * scale, hipY * 0.52);
+    ctx.lineWidth = lw; ctx.strokeStyle = '#08080a';
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(knee[0], knee[1]); ctx.lineTo(foot[0], foot[1]); ctx.stroke();
+    ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(255,194,122,' + f(0.5 * 0.85, 2) + ')';
+    ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(knee[0], knee[1]); ctx.lineTo(foot[0], foot[1]); ctx.stroke();
+  }
+  // 躯干
+  ctx.lineWidth = lw * 1.5; ctx.strokeStyle = '#08080a';
+  ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(chest[0], chest[1]); ctx.lineTo(neck[0], neck[1]); ctx.stroke();
+  ctx.lineWidth = 1.6; ctx.strokeStyle = 'rgba(255,194,122,.55)';
+  ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(chest[0], chest[1]); ctx.lineTo(neck[0], neck[1]); ctx.stroke();
+  // 臂：随侧倾反向展开
+  const armSpread = 0.30 + Math.abs(trunk) * 0.9;
+  for (const s of [-1, 1]) {
+    const sh = P(s * 0.17 * scale, chestY);
+    const el = P(s * (0.17 + armSpread * 0.5) * scale, chestY + 0.20 * scale);
+    const hd = P(s * (0.17 + armSpread) * scale, chestY + 0.34 * scale - Math.abs(trunk) * 0.1 * scale);
+    ctx.lineWidth = lw * 0.8; ctx.strokeStyle = '#08080a';
+    ctx.beginPath(); ctx.moveTo(sh[0], sh[1]); ctx.lineTo(el[0], el[1]); ctx.lineTo(hd[0], hd[1]); ctx.stroke();
+    ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,194,122,.45)';
+    ctx.beginPath(); ctx.moveTo(sh[0], sh[1]); ctx.lineTo(el[0], el[1]); ctx.lineTo(hd[0], hd[1]); ctx.stroke();
+  }
+  // 头
+  const hr = 0.115 * scale;
+  ctx.fillStyle = '#08080a'; ctx.beginPath(); ctx.arc(headC[0], headC[1], hr, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,194,122,.75)'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.arc(headC[0], headC[1], hr, 0, TAU); ctx.stroke();
+  // 脸朝向（yaw 投影到后视 = 水平偏移）
+  const faceX = headC[0] + Math.sin(SB.yaw) * hr * 1.5, faceY = headC[1] + hr * 0.1;
+  ctx.fillStyle = 'rgba(255,215,162,.85)';
+  ctx.beginPath(); ctx.arc(faceX, faceY, hr * 0.22, 0, TAU); ctx.fill();
+  // 颈部力矩弧
+  if (SB.neck) {
+    const dth = head - trunk;
+    ctx.strokeStyle = Math.abs(dth) > 0.3 ? 'rgba(255,77,77,.7)' : 'rgba(63,227,255,.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(neck[0], neck[1], hr * 1.9, Math.min(trunk, head) - Math.PI / 2, Math.max(trunk, head) - Math.PI / 2); ctx.stroke();
+  }
+  // 矢量
+  const comLocal = [0, hipY * 0.42 + chestY * 0.58];
+  const com = P(comLocal[0], comLocal[1]);
+  // 头按自己的 roll 站位，与「头跟着躯干」相比的横向差就是重心横移（屏幕右为正）
+  const dth = trunk - head;
+  const shift = M_HEAD * H_HEAD * (Math.sin(head) - Math.sin(trunk)) * scale;
+  const comX = com[0] + shift;
+  if (SB.geff) {
+    const gl = 0.55 * scale;
+    const gx = comX - Math.sin(geffAng) * gl * SB.dir, gy = com[1] + Math.cos(geffAng) * gl;
+    ctx.strokeStyle = 'rgba(255,77,77,.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(comX, com[1]); ctx.lineTo(gx, gy); ctx.stroke();
+    const ah = 7, aa = Math.atan2(gy - com[1], gx - comX);
+    ctx.beginPath(); ctx.moveTo(gx, gy);
+    ctx.lineTo(gx - ah * Math.cos(aa - 0.4), gy - ah * Math.sin(aa - 0.4));
+    ctx.lineTo(gx - ah * Math.cos(aa + 0.4), gy - ah * Math.sin(aa + 0.4));
+    ctx.closePath(); ctx.fillStyle = 'rgba(255,77,77,.85)'; ctx.fill();
+    ctx.fillStyle = 'rgba(255,77,77,.9)'; ctx.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+    ctx.fillText('g_eff', gx + 6, gy + 4);
+    // 重力（灰）
+    ctx.strokeStyle = 'rgba(143,163,184,.5)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(comX, com[1]); ctx.lineTo(comX, com[1] + gl); ctx.stroke();
+    ctx.fillStyle = 'rgba(143,163,184,.7)'; ctx.fillText('g', comX + 5, com[1] + gl + 4);
+  }
+  if (SB.com) {
+    ctx.fillStyle = '#9fd356'; ctx.beginPath(); ctx.arc(comX, com[1], 4.5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(159,211,86,.5)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(comX, com[1]); ctx.lineTo(comX, ground); ctx.stroke(); ctx.setLineDash([]);
+    const off = Math.abs(comX - cx) / scale;
+    ctx.fillStyle = off > PATCH ? 'rgba(255,77,77,.9)' : 'rgba(159,211,86,.85)';
+    ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+    ctx.fillText('CoM 偏移 ' + f(off * 100, 1) + ' cm', comX + 8, ground - 6);
+  }
+  // 标注
+  ctx.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+  ctx.fillStyle = 'rgba(255,171,77,.9)';
+  ctx.fillText('躯干 ' + f(trunk * DEG, 1) + '°', 16, h - 16);
+  ctx.fillStyle = 'rgba(63,227,255,.9)';
+  ctx.fillText('头 ' + f(head * DEG, 1) + '°  Δθ ' + f(dth * DEG, 1) + '°', 16, h - 32);
+  ctx.fillStyle = 'rgba(164,156,140,.7)';
+  ctx.fillText('R ' + f(SB.R, 1) + ' m · v ' + f(SB.v, 1) + ' m/s · ' + (SB.dir > 0 ? '右弯' : '左弯'), 16, 24);
+}
+function drawTop() {
+  const { ctx, w, h } = fit($('#cvTop'));
+  ctx.clearRect(0, 0, w, h);
+  const mono = getComputedStyle(document.body).getPropertyValue('--mono');
+  const R = Math.min(w * 0.46, h * 1.02);
+  const rx = w * 0.5 - SB.dir * w * 0.05, ry = h * 0.82;
+  // 圆心与少年同高 ⇒ 少年落在圆的最左/最右点，那里的切线正好竖直向上
+  const ccx = rx + SB.dir * R, ccy = ry;
+  const th0 = SB.dir > 0 ? Math.PI : 0;
+  const aB = th0 - SB.dir * 0.16, aA = th0 + SB.dir * 0.80;
+  const lo = Math.min(aB, aA), hi = Math.max(aB, aA);
+  ctx.strokeStyle = 'rgba(201,189,164,.16)'; ctx.lineWidth = 14;
+  ctx.beginPath(); ctx.arc(ccx, ccy, R, lo, hi); ctx.stroke();
+  ctx.strokeStyle = SB.dir > 0 ? 'rgba(255,171,77,.75)' : 'rgba(63,227,255,.75)'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(ccx, ccy, R, lo, hi); ctx.stroke();
+  // 半径：截断到画面内，标注居中
+  const rl = Math.min(R, w * 0.40);
+  ctx.strokeStyle = 'rgba(143,163,184,.4)'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + SB.dir * rl, ry); ctx.stroke(); ctx.setLineDash([]);
+  ctx.font = '10px ' + mono; ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(143,163,184,.85)';
+  ctx.fillText('R = ' + f(SB.R, 1) + ' m', rx + SB.dir * rl * 0.5, ry - 8);
+  ctx.textAlign = 'left';
+  // 少年
+  ctx.fillStyle = '#ffd7a2'; ctx.beginPath(); ctx.arc(rx, ry, 6, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,171,77,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(rx, ry, 10, 0, TAU); ctx.stroke();
+  // 速度矢量（切向 = 正上方）
+  const vlen = Math.min(SB.v * 4.2, ry - 18);
+  ctx.strokeStyle = 'rgba(159,211,86,.9)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx, ry - vlen); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rx, ry - vlen); ctx.lineTo(rx - 4, ry - vlen + 7); ctx.lineTo(rx + 4, ry - vlen + 7); ctx.closePath();
+  ctx.fillStyle = 'rgba(159,211,86,.9)'; ctx.fill();
+  ctx.fillText('v ' + f(SB.v, 1), rx + 8, ry - vlen + 4);
+  // 视线：沿弧超前 gaze 秒
+  if (SB.gazeOn) {
+    const ga = th0 + SB.dir * (SB.v * SB.gaze / SB.R);
+    const gx = ccx + R * Math.cos(ga), gy = ccy + R * Math.sin(ga);
+    ctx.strokeStyle = 'rgba(63,227,255,.85)'; ctx.setLineDash([5, 3]); ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(gx, gy); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#3fe3ff'; ctx.beginPath(); ctx.arc(gx, gy, 4, 0, TAU); ctx.fill();
+    ctx.textAlign = SB.dir > 0 ? 'right' : 'left';
+    ctx.fillText('视线 +' + f(SB.v * SB.gaze, 2) + ' m', gx - SB.dir * 8, gy - 6);
+    ctx.textAlign = 'left';
+  }
+  // 离心：背离圆心
+  const ex = rx - SB.dir * 34;
+  ctx.strokeStyle = 'rgba(255,77,77,.6)'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(ex, ry); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ex, ry); ctx.lineTo(ex + SB.dir * 7, ry - 4); ctx.lineTo(ex + SB.dir * 7, ry + 4); ctx.closePath();
+  ctx.fillStyle = 'rgba(255,77,77,.7)'; ctx.fill();
+  ctx.textAlign = SB.dir > 0 ? 'right' : 'left';
+  ctx.fillStyle = 'rgba(255,77,77,.85)'; ctx.fillText('离心', ex - SB.dir * 4, ry + 16);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(164,156,140,.65)'; ctx.fillText('俯视 · 圆心在' + (SB.dir > 0 ? '右' : '左'), 14, 20);
+}
+function readB() {
+  const k = SB.dir / SB.R, alat = k * SB.v * SB.v;
+  const want = Math.atan(alat / G) * SB.gain, lin = alat / G * SB.gain;
+  const trunk = SB.trunkRoll, head = SB.headRoll, dth = trunk - head;
+  const geffMag = Math.hypot(G, alat);
+  const mh = M_HEAD * 55;
+  const tq = mh * geffMag * D_NECK * Math.sin(Math.abs(head - Math.atan(alat / G)));
+  const shift = M_HEAD * H_HEAD * (Math.sin(head) - Math.sin(trunk));
+  $('#b-alat').textContent = f(Math.abs(alat), 3);
+  $('#b-ag').textContent = f(Math.abs(alat) / G, 3) + ' g';
+  $('#b-trunk').textContent = f(trunk * DEG, 2) + '°';
+  $('#b-want').textContent = '物理角 ' + f(want * DEG, 2) + '°';
+  $('#b-head').textContent = f(head * DEG, 2) + '°';
+  $('#b-delta').textContent = 'Δθ ' + f(dth * DEG, 2) + '°';
+  $('#b-com').textContent = f(Math.abs(shift) * 100, 2);
+  const marg = Math.abs(shift) / PATCH * 100;
+  $('#b-margin').textContent = 'cm · 裕度 ' + f(100 - marg, 1) + '%';
+  $('#b-com').className = 'v ' + (marg > 60 ? 'rd' : marg > 35 ? 'wn' : 'gr');
+  $('#b-torque').textContent = f(tq, 2);
+  $('#b-torque').className = 'v ' + (tq > NECK_BUDGET ? 'rd' : tq > NECK_BUDGET * 0.6 ? 'wn' : 'gr');
+  $('#b-err').textContent = f((want - lin) * DEG, 2) + '°';
+  $('#b-dir').textContent = SB.dir > 0 ? '右弯' : '左弯';
+  $('#b-dir').className = SB.dir > 0 ? 'tag' : 'tag info';
+  const cl = $('#b-clamp');
+  if (Math.abs(want) > SB.leanMax) { cl.textContent = '已触体能上限'; cl.className = 'tag bad'; $('#b-trunk').className = 'v rd'; }
+  else { cl.textContent = '未触上限'; cl.className = 'tag ok'; $('#b-trunk').className = 'v'; }
+}
+
+/* =====================================================================
+   LAB C · 路线（与 scene.js 逐字同参）
+   ===================================================================== */
+const GATE = { minR: 22, grade: 0.045, runLen: 12, sep: 8.3 };
+const SC = {
+  seed: 137, targetL: 295, h2: 1, h3: 1, h4: 1, va: 1, v: 8,
+  curv: true, sepOn: true, rider: true, grid: true, label: true,
+  s: 0, tries: 1, stat: null, LOOP: null, L: 0, M: 0, STEP: 0.25, POS: [], TAN: [], KS: [], viol: []
+};
+function loopCandidate(seed) {
+  const r = mulberry32(seed >>> 0);
+  const rr = (a, b) => a + (b - a) * r();
+  return {
+    R0: 45, rot: rr(0, TAU),
+    H: [{ k: 2, a: rr(0.08, 0.16) * SC.h2, p: rr(0, TAU) },
+        { k: 3, a: rr(0.10, 0.15) * SC.h3, p: rr(0, TAU) },
+        { k: 4, a: rr(0.010, 0.035) * SC.h4, p: rr(0, TAU) }],
+    Y: [{ k: 2, a: rr(0.45, 0.85) * SC.va, p: rr(0, TAU) },
+        { k: 3, a: rr(0.14, 0.30) * SC.va, p: rr(0, TAU) }]
+  };
+}
+function pathAt(u) {
+  const H = SC.LOOP.H, Y = SC.LOOP.Y; let m = 1, y = 0;
+  for (let i = 0; i < H.length; i++) m += H[i].a * Math.sin(H[i].k * u + H[i].p);
+  for (let i = 0; i < Y.length; i++) y += Y[i].a * Math.sin(Y[i].k * u + Y[i].p);
+  const R = SC.LOOP.R0 * m, a = u + SC.LOOP.rot;
+  return [R * Math.sin(a), y, R * Math.cos(a)];
+}
+function derivAt(u, h) {
+  const a = pathAt(u - h), b = pathAt(u + h);
+  return [(b[0] - a[0]) / (2 * h), (b[1] - a[1]) / (2 * h), (b[2] - a[2]) / (2 * h)];
+}
+const nrm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+function coarseLen() {
+  const n = 1024; let sum = 0, p = pathAt(0);
+  for (let i = 1; i <= n; i++) { const q = pathAt(i / n * TAU); sum += Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]); p = q; }
+  return sum;
+}
+const NSAMP = 2048;
+function buildTable() {
+  const us = [], ps = [], cum = [0];
+  for (let i = 0; i <= NSAMP; i++) { const u = i / NSAMP * TAU; us.push(u); ps.push(pathAt(u)); }
+  for (let i = 1; i <= NSAMP; i++) {
+    const dx = ps[i][0] - ps[i - 1][0], dy = ps[i][1] - ps[i - 1][1], dz = ps[i][2] - ps[i - 1][2];
+    cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy + dz * dz));
+  }
+  SC.L = cum[NSAMP]; SC.M = Math.max(8, Math.round(SC.L / 0.25)); SC.STEP = SC.L / SC.M;
+  SC.POS = []; SC.TAN = []; let j = 0;
+  for (let k = 0; k < SC.M; k++) {
+    const target = k * SC.STEP;
+    while (j < NSAMP - 1 && cum[j + 1] < target) j++;
+    const seg = cum[j + 1] - cum[j], fr = seg > 0 ? (target - cum[j]) / seg : 0;
+    const u = us[j] + (us[j + 1] - us[j]) * fr;
+    SC.POS.push(pathAt(u)); SC.TAN.push(nrm(derivAt(u, 1e-4)));
+  }
+}
+function wrapS(s) { s = s % SC.L; if (s < 0) s += SC.L; return s; }
+function sampleAt(s) {
+  s = wrapS(s);
+  const idx = s / SC.STEP, i0 = Math.floor(idx) % SC.M, i1 = (i0 + 1) % SC.M, fr = idx - Math.floor(idx);
+  const p0 = SC.POS[i0], p1 = SC.POS[i1], t0 = SC.TAN[i0], t1 = SC.TAN[i1];
+  return { p: [lerp(p0[0], p1[0], fr), lerp(p0[1], p1[1], fr), lerp(p0[2], p1[2], fr)],
+           t: nrm([lerp(t0[0], t1[0], fr), lerp(t0[1], t1[1], fr), lerp(t0[2], t1[2], fr)]) };
+}
+function curvatureHAt(s) {
+  const h = 1.0, a = sampleAt(s - h).t, b = sampleAt(s + h).t;
+  const th = nrm([sampleAt(s).t[0], 0, sampleAt(s).t[2]]);
+  const ah = nrm([a[0], 0, a[2]]), bh = nrm([b[0], 0, b[2]]);
+  const dh = [(bh[0] - ah[0]) / (2 * h), 0, (bh[2] - ah[2]) / (2 * h)];
+  return Math.hypot(dh[0], dh[2]) * (dot(cross(th, dh), [0, 1, 0]) >= 0 ? 1 : -1);
+}
+function loopStats() {
+  const M = SC.M, KS = new Float64Array(M); let minRp = 1e9, minRn = 1e9, maxGrade = 0, yMin = 1e9, yMax = -1e9;
+  const h = 4 * SC.STEP;
+  for (let k = 0; k < M; k++) {
+    const T = SC.TAN[k], a = SC.TAN[(k - 4 + M) % M], b = SC.TAN[(k + 4) % M];
+    const th = nrm([T[0], 0, T[2]]), ah = nrm([a[0], 0, a[2]]), bh = nrm([b[0], 0, b[2]]);
+    const dh = [(bh[0] - ah[0]) / (2 * h), 0, (bh[2] - ah[2]) / (2 * h)];
+    const kk = Math.hypot(dh[0], dh[2]) * (dot(cross(th, dh), [0, 1, 0]) >= 0 ? 1 : -1);
+    KS[k] = kk;
+    if (Math.abs(kk) > 1e-6) { const r = 1 / Math.abs(kk); if (kk > 0) { if (r < minRp) minRp = r; } else if (r < minRn) minRn = r; }
+    const g = Math.abs(T[1]); if (g > maxGrade) maxGrade = g;
+    if (SC.POS[k][1] < yMin) yMin = SC.POS[k][1];
+    if (SC.POS[k][1] > yMax) yMax = SC.POS[k][1];
+  }
+  SC.KS = KS;
+  const runs = []; let cur = null;
+  for (let k = 0; k < M; k++) { const sg = KS[k] > 0 ? 1 : -1; if (!cur || cur.sg !== sg) { cur = { sg, n: 0 }; runs.push(cur); } cur.n++; }
+  if (runs.length > 1 && runs[0].sg === runs[runs.length - 1].sg) { runs[0].n += runs[runs.length - 1].n; runs.pop(); }
+  let right = 0, left = 0, rightLen = 0, leftLen = 0;
+  for (const r of runs) { const len = r.n * SC.STEP; if (len < GATE.runLen) continue; if (r.sg > 0) { right++; rightLen += len; } else { left++; leftLen += len; } }
+  let minSep = 1e9; const guard = Math.ceil(14 / SC.STEP); SC.viol = [];
+  for (let a = 0; a < M; a += 4) for (let b = a + guard; b < M; b += 4) {
+    if (M - (b - a) < guard) continue;
+    const pa = SC.POS[a], pb = SC.POS[b];
+    const d = Math.hypot(pa[0] - pb[0], pa[1] - pb[1], pa[2] - pb[2]);
+    if (d < minSep) minSep = d;
+    if (d < GATE.sep) SC.viol.push([a, b]);
+  }
+  return { L: SC.L, minR: Math.min(minRp, minRn), minRp, minRn, grade: maxGrade, dY: yMax - yMin, right, left, rightLen, leftLen, minSep };
+}
+const loopOK = m => m.minR >= GATE.minR && m.grade <= GATE.grade && m.right >= 2 && m.left >= 2 && m.minSep >= GATE.sep;
+function pickLoop(seed, reject) {
+  const s0 = (seed >>> 0) || 1; let tries = 0, m = null;
+  for (tries = 0; tries < 96; tries++) {
+    SC.LOOP = loopCandidate(s0 + tries * 2654435761);
+    let lo = 30, hi = 62;
+    for (let it = 0; it < 24; it++) { SC.LOOP.R0 = (lo + hi) / 2; if (coarseLen() < SC.targetL) lo = SC.LOOP.R0; else hi = SC.LOOP.R0; }
+    SC.LOOP.R0 = (lo + hi) / 2;
+    buildTable(); m = loopStats();
+    if (!reject || loopOK(m)) break;
+  }
+  SC.tries = tries + 1; SC.seed = s0; SC.stat = m; SC.s = wrapS(SC.s);
+  return m;
+}
+function drawRoute() {
+  const { ctx, w, h } = fit($('#cvRoute'));
+  ctx.clearRect(0, 0, w, h);
+  if (!SC.POS.length) return;
+  let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+  for (const p of SC.POS) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[2] < minZ) minZ = p[2]; if (p[2] > maxZ) maxZ = p[2]; }
+  const pad = 46;
+  const sc = Math.min((w - pad * 2) / (maxX - minX), (h - pad * 2) / (maxZ - minZ));
+  const ox = (w - (maxX - minX) * sc) / 2 - minX * sc, oy = (h - (maxZ - minZ) * sc) / 2 - minZ * sc;
+  const X = x => ox + x * sc, Y = z => oy + z * sc;
+  // 网格
+  if (SC.grid) {
+    ctx.strokeStyle = 'rgba(201,189,164,.06)'; ctx.lineWidth = 1;
+    ctx.font = '9px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+    ctx.fillStyle = 'rgba(164,156,140,.4)';
+    for (let gx = Math.ceil(minX / 20) * 20; gx <= maxX; gx += 20) { ctx.beginPath(); ctx.moveTo(X(gx), 0); ctx.lineTo(X(gx), h); ctx.stroke(); ctx.fillText(gx + '', X(gx) + 3, h - 6); }
+    for (let gz = Math.ceil(minZ / 20) * 20; gz <= maxZ; gz += 20) { ctx.beginPath(); ctx.moveTo(0, Y(gz)); ctx.lineTo(w, Y(gz)); ctx.stroke(); ctx.fillText(gz + '', 4, Y(gz) - 3); }
+    // 比例尺
+    const sb = 20 * sc;
+    ctx.strokeStyle = 'rgba(255,171,77,.7)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(w - sb - 20, h - 22); ctx.lineTo(w - 20, h - 22); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,171,77,.85)'; ctx.fillText('20 m', w - sb - 20, h - 28);
+  }
+  // 管壁轮廓（半透明带宽 = 2·RAD）
+  ctx.strokeStyle = 'rgba(201,189,164,.07)'; ctx.lineWidth = 3.15 * 2 * sc;
+  ctx.beginPath();
+  for (let k = 0; k <= SC.M; k++) { const p = SC.POS[k % SC.M]; k ? ctx.lineTo(X(p[0]), Y(p[2])) : ctx.moveTo(X(p[0]), Y(p[2])); }
+  ctx.closePath(); ctx.stroke();
+  // 中心线：曲率着色
+  const kmax = Math.max(1e-6, SC.KS.reduce((a, b) => Math.max(a, Math.abs(b)), 0));
+  ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+  for (let k = 0; k < SC.M; k++) {
+    const p0 = SC.POS[k], p1 = SC.POS[(k + 1) % SC.M];
+    const kk = SC.KS[k];
+    if (SC.curv) {
+      const t = Math.min(1, Math.abs(kk) / kmax);
+      ctx.strokeStyle = kk > 0 ? 'rgba(255,' + f(171 - 60 * t, 0) + ',' + f(77 - 30 * t, 0) + ',' + f(0.45 + 0.55 * t, 2) + ')'
+                               : 'rgba(' + f(63 + 40 * t, 0) + ',227,255,' + f(0.4 + 0.6 * t, 2) + ')';
+    } else ctx.strokeStyle = 'rgba(201,189,164,.6)';
+    ctx.beginPath(); ctx.moveTo(X(p0[0]), Y(p0[2])); ctx.lineTo(X(p1[0]), Y(p1[2])); ctx.stroke();
+  }
+  // 间距违规
+  if (SC.sepOn && SC.viol.length) {
+    ctx.strokeStyle = 'rgba(255,77,77,.8)'; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]);
+    for (const v of SC.viol.slice(0, 40)) {
+      const a = SC.POS[v[0]], b = SC.POS[v[1]];
+      ctx.beginPath(); ctx.moveTo(X(a[0]), Y(a[2])); ctx.lineTo(X(b[0]), Y(b[2])); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+  // 极值标注
+  if (SC.label) {
+    let iP = 0, iN = 0, rp = 1e9, rn = 1e9;
+    for (let k = 0; k < SC.M; k++) { const kk = SC.KS[k]; if (Math.abs(kk) < 1e-6) continue; const r = 1 / Math.abs(kk); if (kk > 0 && r < rp) { rp = r; iP = k; } if (kk < 0 && r < rn) { rn = r; iN = k; } }
+    const mark = (i, txt, col) => {
+      const p = SC.POS[i]; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[2]), 4, 0, TAU); ctx.fill();
+      ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+      ctx.fillText(txt, X(p[0]) + 8, Y(p[2]) - 6);
+    };
+    mark(iP, 'R右 ' + f(rp, 1), '#ffab4d'); mark(iN, 'R左 ' + f(rn, 1), '#3fe3ff');
+    const p0 = SC.POS[0];
+    ctx.strokeStyle = 'rgba(159,211,86,.8)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(X(p0[0]), Y(p0[2]), 7, 0, TAU); ctx.stroke();
+    ctx.fillStyle = 'rgba(159,211,86,.9)'; ctx.fillText('s=0', X(p0[0]) + 10, Y(p0[2]) + 14);
+  }
+  // 少年
+  if (SC.rider) {
+    const sm = sampleAt(SC.s), p = sm.p, t = sm.t;
+    const x = X(p[0]), y = Y(p[2]);
+    const ang = Math.atan2(t[0], -t[2]);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+    ctx.fillStyle = 'rgba(255,215,162,.2)'; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(-9, 8); ctx.lineTo(9, 8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffd7a2'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#ffab4d'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(0, 0, 8.5, 0, TAU); ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle = 'rgba(255,215,162,.85)'; ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+    ctx.fillText('s ' + f(SC.s, 1) + ' m · κ ' + f(curvatureHAt(SC.s), 4), x + 12, y + 4);
+  }
+}
+function readC() {
+  const m = SC.stat; if (!m) return;
+  $('#c-l').textContent = f(m.L, 3);
+  $('#c-step').textContent = 'm · M ' + SC.M + ' · STEP ' + f(SC.STEP, 5);
+  $('#c-minr').textContent = f(m.minR, 3);
+  $('#c-minrs').textContent = '右 ' + f(m.minRp, 2) + ' / 左 ' + f(m.minRn, 2);
+  $('#c-minr').className = 'v ' + (m.minR < GATE.minR ? 'rd' : '');
+  $('#c-grade').textContent = f(m.grade * 100, 3);
+  $('#c-grade').className = 'v ' + (m.grade > GATE.grade ? 'rd' : 'gr');
+  $('#c-runs').textContent = m.right + ' / ' + m.left;
+  $('#c-runs').className = 'v ' + (m.right < 2 || m.left < 2 ? 'rd' : 'cy');
+  $('#c-runlen').textContent = f(m.rightLen, 1) + ' / ' + f(m.leftLen, 1) + ' m';
+  $('#c-sep').textContent = f(m.minSep, 3);
+  $('#c-sep').className = 'v ' + (m.minSep < GATE.sep ? 'rd' : '');
+  $('#c-dy').textContent = f(m.dY, 3);
+  const ok = loopOK(m);
+  $('#c-tries').textContent = SC.tries + ' 次' + (ok ? '命中' : '未过闸');
+  $('#c-tries').className = ok ? 'tag ok' : 'tag bad';
+  const gates = [
+    ['最小半径 ≥22 m', m.minR >= GATE.minR, f(m.minR, 2)],
+    ['纵坡 ≤4.5%', m.grade <= GATE.grade, f(m.grade * 100, 2) + '%'],
+    ['右弯 ≥2 段', m.right >= 2, m.right + ' 段'],
+    ['左弯 ≥2 段', m.left >= 2, m.left + ' 段'],
+    ['间距 ≥8.3 m', m.minSep >= GATE.sep, f(m.minSep, 2)],
+    ['每段 ≥12 m', m.rightLen > 0 && m.leftLen > 0, '游程过滤']
+  ];
+  $('#c-gates').innerHTML = gates.map(g => '<span class="gate' + (g[1] ? '' : ' no') + '"><i></i>' + g[0] + ' <b style="color:var(--ink)">' + g[2] + '</b></span>').join('');
+}
+function routeSVG() {
+  const m = SC.stat, W = 900, H = 900, pad = 60;
+  let minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+  for (const p of SC.POS) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minZ = Math.min(minZ, p[2]); maxZ = Math.max(maxZ, p[2]); }
+  const sc = Math.min((W - pad * 2) / (maxX - minX), (H - pad * 2) / (maxZ - minZ));
+  const ox = (W - (maxX - minX) * sc) / 2 - minX * sc, oy = (H - (maxZ - minZ) * sc) / 2 - minZ * sc;
+  let paths = '';
+  const kmax = Math.max(1e-6, SC.KS.reduce((a, b) => Math.max(a, Math.abs(b)), 0));
+  for (let k = 0; k < SC.M; k++) {
+    const p0 = SC.POS[k], p1 = SC.POS[(k + 1) % SC.M], kk = SC.KS[k], t = Math.min(1, Math.abs(kk) / kmax);
+    const col = kk > 0 ? 'rgb(255,' + (171 - 60 * t | 0) + ',' + (77 - 30 * t | 0) + ')' : 'rgb(' + (63 + 40 * t | 0) + ',227,255)';
+    paths += '<line x1="' + f(ox + p0[0] * sc, 2) + '" y1="' + f(oy + p0[2] * sc, 2) + '" x2="' + f(ox + p1[0] * sc, 2) + '" y2="' + f(oy + p1[2] * sc, 2) + '" stroke="' + col + '" stroke-width="2.4" stroke-opacity="' + f(0.45 + 0.55 * t, 2) + '"/>';
+  }
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">' +
+    '<rect width="' + W + '" height="' + H + '" fill="#080a0c"/>' + paths +
+    '<text x="24" y="36" fill="#ffab4d" font-family="monospace" font-size="15">无限隧道 · 种子 ' + SC.seed + ' · L ' + f(m.L, 3) + ' m · ' + SC.tries + ' 次命中</text>' +
+    '<text x="24" y="58" fill="#8fa3b8" font-family="monospace" font-size="12">minR ' + f(m.minR, 2) + ' m · grade ' + f(m.grade * 100, 2) + '% · right ' + m.right + ' / left ' + m.left + ' · sep ' + f(m.minSep, 2) + ' m</text>' +
+    '<text x="24" y="' + (H - 24) + '" fill="#c9bda4" font-family="monospace" font-size="11">橙 = 右转 · 青 = 左转 · 星形极坐标闭合环 R(u)&gt;0</text></svg>';
+}
+
+/* =====================================================================
+   LAB D · 骨架示意（二维侧视 + 双骨 IK）
+   ===================================================================== */
+const SD = {
+  mile: 1, lean: 15, crouch: 0.22, couple: 0.6, pushSpeed: 1, bw: 1, rim: 0.85, zoom: 1,
+  label: true, ik: true, com: true, play: true, phase: 0, t: 0
+};
+const JOINTS = {
+  1: ['board', 'pelvis', 'spine1', 'spine2', 'chest', 'neck', 'head'],
+  2: ['hipL', 'kneeL', 'ankleL', 'toeL', 'hipR', 'kneeR', 'ankleR', 'toeR'],
+  3: ['clavL', 'elbowL', 'handL', 'clavR', 'elbowR', 'handR'],
+  4: ['coat1', 'coat2', 'strap1', 'strap2']
+};
+function ik2(hx, hy, fx, fy, l1, l2, bend) {
+  let dx = fx - hx, dy = fy - hy, d = Math.hypot(dx, dy);
+  d = clamp(d, Math.abs(l1 - l2) + 1e-4, l1 + l2 - 1e-4);
+  const a = Math.atan2(dy, dx);
+  const cosA = clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1);
+  const ang = a + bend * Math.acos(cosA);
+  return [hx + l1 * Math.cos(ang), hy + l1 * Math.sin(ang)];
+}
+function drawRig(dt) {
+  const { ctx, w, h } = fit($('#cvRig'));
+  ctx.clearRect(0, 0, w, h);
+  SD.t += dt;
+  if (SD.play && SD.mile >= 2) { SD.phase = (SD.phase + dt * 0.55 * SD.pushSpeed) % 1; }
+  const sc = h * 0.40 / 1.62 * SD.zoom;
+  const cx = w * 0.46, ground = h * 0.84;
+  const lean = SD.lean / DEG;
+  const cr = SD.crouch;
+  // 地面
+  ctx.strokeStyle = 'rgba(201,189,164,.25)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, ground); ctx.lineTo(w, ground); ctx.stroke();
+  const rg = ctx.createLinearGradient(0, ground, 0, h);
+  rg.addColorStop(0, 'rgba(28,33,38,.7)'); rg.addColorStop(1, 'rgba(8,10,12,.9)');
+  ctx.fillStyle = rg; ctx.fillRect(0, ground, w, h - ground);
+  const rot = (x, y) => {
+    const c = Math.cos(lean), s = Math.sin(lean);
+    return [cx + x * c - y * s, ground + x * s + y * c];
+  };
+  // 板
+  const bl = 0.82 * sc;
+  ctx.save(); ctx.translate(cx, ground); ctx.rotate(lean * 0.85);
+  ctx.fillStyle = '#1a1d21'; ctx.strokeStyle = 'rgba(255,171,77,.55)'; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.roundRect(-bl / 2, -0.05 * sc, bl, 0.05 * sc, 3); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // 关键点（局部，y 向上负）
+  const hipY = -(0.86 - cr * 0.30) * sc;
+  const spine1Y = -(1.00 - cr * 0.32) * sc, spine2Y = -(1.12 - cr * 0.33) * sc;
+  const chestY = -(1.24 - cr * 0.34) * sc, neckY = -(1.40 - cr * 0.36) * sc, headY = -(1.52 - cr * 0.36) * sc;
+  const pts = {};
+  const add = (n, x, y, m) => { pts[n] = { p: rot(x, y), m, local: [x, y] }; };
+  add('board', 0, 0, 1); add('pelvis', 0, hipY, 1); add('spine1', 0, spine1Y, 1); add('spine2', 0, spine2Y, 1);
+  add('chest', 0, chestY, 1); add('neck', 0, neckY, 1);
+  // 头：独立 roll（世界系），所以先取颈的世界位置再反旋
+  const neckW = rot(0, neckY);
+  const headLocalAng = -lean * SD.couple;
+  const hw = [neckW[0] + Math.sin(headLocalAng) * 0.12 * sc, neckW[1] - Math.cos(headLocalAng) * 0.12 * sc];
+  pts.head = { p: [hw[0], hw[1] - 0.10 * sc], m: 1, local: [0, headY] };
+  // 腿（M2）：蹬地相位驱动右脚目标
+  const ph = SD.phase;
+  let footR;
+  if (SD.mile >= 2) {
+    // 0→0.35 后伸触地，0.35→0.6 蹬伸，0.6→1 收回板面
+    let tx, ty;
+    if (ph < 0.35) { const t = ph / 0.35; tx = lerp(0.20, -0.52, t) * sc; ty = lerp(-0.05, 0.0, t) * sc; }
+    else if (ph < 0.6) { const t = (ph - 0.35) / 0.25; tx = lerp(-0.52, -0.30, t) * sc; ty = 0; }
+    else { const t = (ph - 0.6) / 0.4; tx = lerp(-0.30, 0.20, t) * sc; ty = lerp(0.0, -0.05, t) * sc; }
+    footR = rot(tx, ty);
+  } else footR = rot(0.20 * sc, -0.05 * sc);
+  const footL = rot(-0.18 * sc, -0.05 * sc);
+  const hipL = rot(-0.09 * sc, hipY), hipR = rot(0.09 * sc, hipY);
+  const thigh = 0.42 * sc, shin = 0.40 * sc;
+  const kneeL = ik2(hipL[0], hipL[1], footL[0], footL[1], thigh, shin, 1);
+  const kneeR = ik2(hipR[0], hipR[1], footR[0], footR[1], thigh, shin, 1);
+  add('hipL', -0.09 * sc, hipY, 2); add('hipR', 0.09 * sc, hipY, 2);
+  pts.kneeL = { p: kneeL, m: 2 }; pts.kneeR = { p: kneeR, m: 2 };
+  pts.ankleL = { p: footL, m: 2 }; pts.ankleR = { p: footR, m: 2 };
+  pts.toeL = { p: rot(-0.18 * sc + 0.10 * sc, -0.05 * sc), m: 2 };
+  pts.toeR = { p: [footR[0] + 0.10 * sc, footR[1]], m: 2 };
+  // 臂（M3）
+  const spread = 0.30 + Math.abs(lean) * 0.9;
+  for (const s of [-1, 1]) {
+    const nm = s < 0 ? 'L' : 'R';
+    const sh = rot(s * 0.17 * sc, chestY);
+    const el = rot(s * (0.17 + spread * 0.5) * sc, chestY + 0.20 * sc);
+    const hd = rot(s * (0.17 + spread) * sc, chestY + 0.34 * sc);
+    pts['clav' + nm] = { p: sh, m: 3 }; pts['elbow' + nm] = { p: el, m: 3 }; pts['hand' + nm] = { p: hd, m: 3 };
+  }
+  // 次级（M4）
+  const sway = Math.sin(SD.t * 2.2) * 0.05 * sc;
+  pts.coat1 = { p: rot(-0.10 * sc + sway, hipY + 0.14 * sc), m: 4 };
+  pts.coat2 = { p: rot(-0.14 * sc + sway * 1.6, hipY + 0.30 * sc), m: 4 };
+  pts.strap1 = { p: rot(0.14 * sc - sway * 0.7, chestY + 0.16 * sc), m: 4 };
+  pts.strap2 = { p: rot(0.18 * sc - sway * 1.2, chestY + 0.32 * sc), m: 4 };
+  // 骨段
+  const bones = [
+    ['board', 'pelvis', 1], ['pelvis', 'spine1', 1], ['spine1', 'spine2', 1], ['spine2', 'chest', 1],
+    ['chest', 'neck', 1], ['neck', 'head', 1],
+    ['pelvis', 'hipL', 2], ['hipL', 'kneeL', 2], ['kneeL', 'ankleL', 2], ['ankleL', 'toeL', 2],
+    ['pelvis', 'hipR', 2], ['hipR', 'kneeR', 2], ['kneeR', 'ankleR', 2], ['ankleR', 'toeR', 2],
+    ['chest', 'clavL', 3], ['clavL', 'elbowL', 3], ['elbowL', 'handL', 3],
+    ['chest', 'clavR', 3], ['clavR', 'elbowR', 3], ['elbowR', 'handR', 3],
+    ['pelvis', 'coat1', 4], ['coat1', 'coat2', 4], ['chest', 'strap1', 4], ['strap1', 'strap2', 4]
+  ];
+  ctx.lineCap = 'round';
+  for (const b of bones) {
+    const A = pts[b[0]], B = pts[b[1]]; if (!A || !B) continue;
+    const active = b[2] <= SD.mile, isNew = b[2] === SD.mile;
+    ctx.lineWidth = (b[2] === 1 ? 5 : b[2] === 4 ? 2 : 3.6) * SD.bw;
+    ctx.strokeStyle = !active ? 'rgba(143,163,184,.13)' : isNew ? 'rgba(255,171,77,.95)' : 'rgba(232,226,214,.5)';
+    if (!active) ctx.setLineDash([3, 4]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(A.p[0], A.p[1]); ctx.lineTo(B.p[0], B.p[1]); ctx.stroke();
+    if (active && SD.rim > 0) {
+      ctx.lineWidth = 1.2 * SD.bw; ctx.strokeStyle = 'rgba(255,194,122,' + f(0.5 * SD.rim, 2) + ')';
+      ctx.beginPath(); ctx.moveTo(A.p[0], A.p[1]); ctx.lineTo(B.p[0], B.p[1]); ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+  // IK 目标
+  if (SD.ik && SD.mile >= 2) {
+    for (const ft of [footL, footR]) {
+      ctx.strokeStyle = 'rgba(63,227,255,.8)'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(ft[0] - 6, ft[1]); ctx.lineTo(ft[0] + 6, ft[1]);
+      ctx.moveTo(ft[0], ft[1] - 6); ctx.lineTo(ft[0], ft[1] + 6); ctx.stroke();
+      ctx.strokeStyle = 'rgba(63,227,255,.3)'; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.arc(ft[0], ft[1], 10, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.fillStyle = 'rgba(63,227,255,.85)'; ctx.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+    ctx.fillText('IK 目标', footR[0] + 14, footR[1] + 4);
+  }
+  // 关节
+  let nj = 0, nb = 0;
+  for (const k in pts) {
+    const J = pts[k]; const active = J.m <= SD.mile, isNew = J.m === SD.mile;
+    if (active) nj++;
+    ctx.fillStyle = !active ? 'rgba(143,163,184,.2)' : isNew ? '#ffd7a2' : 'rgba(232,226,214,.75)';
+    ctx.beginPath(); ctx.arc(J.p[0], J.p[1], (isNew ? 4.5 : 3.2) * Math.min(1.4, SD.bw), 0, TAU); ctx.fill();
+    if (isNew) { ctx.strokeStyle = 'rgba(255,171,77,.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(J.p[0], J.p[1], 8, 0, TAU); ctx.stroke(); }
+    if (SD.label && active) {
+      ctx.fillStyle = isNew ? 'rgba(255,215,162,.9)' : 'rgba(164,156,140,.6)';
+      ctx.font = '9.5px ' + getComputedStyle(document.body).getPropertyValue('--mono');
+      ctx.fillText(k, J.p[0] + 8, J.p[1] - 5);
+    }
+  }
+  for (const b of bones) if (b[2] <= SD.mile) nb++;
+  // 重心
+  if (SD.com) {
+    const com = rot(0, hipY * 0.42 + chestY * 0.58);
+    ctx.fillStyle = '#9fd356'; ctx.beginPath(); ctx.arc(com[0], com[1], 4.5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(159,211,86,.45)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(com[0], com[1]); ctx.lineTo(com[0], ground); ctx.stroke(); ctx.setLineDash([]);
+    $('#d-comh').textContent = f(Math.abs(hipY * 0.42 + chestY * 0.58) / sc, 2);
+  }
+  // 头
+  const H = pts.head;
+  ctx.fillStyle = '#08080a'; ctx.beginPath(); ctx.arc(H.p[0], H.p[1], 0.115 * sc, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,194,122,' + f(0.8 * SD.rim, 2) + ')'; ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.arc(H.p[0], H.p[1], 0.115 * sc, 0, TAU); ctx.stroke();
+  $('#d-joints').textContent = nj; $('#d-bones').textContent = nb + ' 骨段';
+  $('#d-ik').textContent = SD.mile >= 2 ? '2' : '0';
+  $('#d-phase').textContent = SD.mile >= 2 ? f(SD.phase, 2) : '—';
+  $('#d-mile').textContent = ['M1 骨架与侧倾', 'M2 腿与蹬地 IK', 'M3 臂与头部链', 'M4 次级运动与 LOD'][SD.mile - 1];
+}
+
+/* =====================================================================
+   色板
+   ===================================================================== */
+const SWATCH = [
+  ['钠灯', '#ffab4d', '主色族 · 灯管直视'], ['钠灯高光', '#ffd7a2', '灯芯 / 轮廓光'],
+  ['钠灯深', '#c96a12', '辉光衰减 / 滑块'], ['应急冷青', '#3fe3ff', '应急回路 / 左转'],
+  ['出口苔绿', '#9fd356', '出口标识 / 合格'], ['铁锈', '#b4462a', '锈迹 / 警示漆'],
+  ['危险红', '#ff4d4d', '失效 / 超预算'], ['警示黄', '#f2c14e', '塌方三角 / 注意'],
+  ['信息蓝', '#8fb8ff', '设计取值 / 说明'], ['混凝土', '#1c2126', '管壁表面'],
+  ['沥青', '#080a0c', '路面 / 背景'], ['老化纸', '#c9bda4', '暖中性 / 正文'],
+  ['冷灰', '#8fa3b8', '冷中性 / 矢量']
+];
+$('#swatches').innerHTML = SWATCH.map(s =>
+  '<div class="swatch" data-hex="' + s[1] + '"><div class="chip" style="background:' + s[1] + '"></div>' +
+  '<div class="meta"><div class="nm">' + s[0] + '</div><div class="hx">' + s[1] + ' · ' + s[2] + '</div></div></div>').join('');
+$$('.swatch').forEach(el => el.addEventListener('click', () => {
+  const hex = el.dataset.hex;
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(hex).then(() => toast('已复制 ' + hex)).catch(() => toast(hex));
+  else toast(hex);
+}));
+
+/* =====================================================================
+   控件接线
+   ===================================================================== */
+// A
+range('r-vset', () => SA.vset, v => { SA.vset = v; resetA(true); }, v => f(v, 1) + ' m/s');
+range('r-mass', () => SA.mass, v => { SA.mass = v; resetA(true); }, v => f(v, 0) + ' kg');
+range('r-crr', () => SA.crr, v => { SA.crr = v; resetA(true); }, v => f(v, 3));
+range('r-cda', () => SA.cda, v => { SA.cda = v; resetA(true); }, v => f(v, 2) + ' m²');
+range('r-grade', () => SA.grade, v => { SA.grade = v; resetA(true); }, v => f(v * 100, 1) + ' %');
+range('r-j', () => SA.J, v => { SA.J = v; }, v => f(v, 2) + ' m/s');
+range('r-cd', () => SA.cd, v => { SA.cd = v; }, v => f(v, 2) + ' s');
+range('r-mj', () => SA.mj, v => { SA.mj = v; }, v => f(v, 2) + ' m/s');
+range('r-ba', () => SA.ba, v => { SA.ba = v; }, v => f(v, 2));
+toggle('t-drive', () => SA.drive, v => { SA.drive = v; resetA(true); });
+toggle('t-trap', () => SA.trap, v => { SA.trap = v; resetA(true); toast(v ? '陷阱开启：推力被付两次' : '陷阱关闭：只离散交付'); });
+toggle('t-band', () => SA.band, v => SA.band = v);
+toggle('t-mark', () => SA.mark, v => SA.mark = v);
+$('#b-push').addEventListener('click', () => { if (manualPushA()) toast('蹬地 · v = ' + f(SA.v, 2) + ' m/s'); });
+$('#cvSpeed').addEventListener('click', () => { if (manualPushA()) toast('蹬地 · v = ' + f(SA.v, 2) + ' m/s'); });
+$('#b-resetA').addEventListener('click', () => {
+  Object.assign(SA, { vset: 8, mass: 55, crr: 0.012, cda: 0.55, grade: 0, J: 0.85, cd: 0.42, mj: 1.15, ba: 1.35, drive: true, trap: false, band: true, mark: true });
+  resetA(); syncAll(); toast('控制台 A 已重置');
+});
+$('#b-randA').addEventListener('click', () => {
+  const r = Math.random;
+  SA.vset = +(4 + r() * 12).toFixed(1); SA.mass = Math.round(45 + r() * 40);
+  SA.crr = +(0.006 + r() * 0.02).toFixed(3); SA.cda = +(0.3 + r() * 0.8).toFixed(2);
+  SA.grade = +((r() - 0.5) * 0.08).toFixed(3); SA.J = +(0.4 + r() * 1.4).toFixed(2);
+  SA.cd = +(0.2 + r() * 0.8).toFixed(2); SA.mj = +(0.5 + r() * 1.8).toFixed(2);
+  resetA(); syncAll(); toast('随机工况 · 设定 ' + f(SA.vset, 1) + ' m/s');
+});
+$('#b-pngA').addEventListener('click', () => pngOf($('#cvSpeed'), 'tunnel-speed-vt.png'));
+/* 导出走独立定步长仿真：不依赖控制台是否在视口内，也不依赖 live 历史 */
+function simA(seconds) {
+  const dt = 1 / 120, A0 = a0A(SA.vset);
+  let t = 0, v = SA.vset, owed = 0, lastPush = -9, rows = [];
+  for (let i = 0; i < Math.round(seconds / dt); i++) {
+    t += dt;
+    let p = 0;
+    if (!SA.drive) { v = SA.vset; owed = 0; }
+    else {
+      const E = effortA(v, SA.vset);
+      let a = SA.trap ? A0 * E - dragA(v, SA.grade) : -dragA(v, SA.grade);
+      if (v > SA.ba * SA.vset) a -= BRAKE_A;
+      owed += A0 * E * dt;
+      v = Math.max(0.4, v + a * dt);
+      if (owed >= SA.J && t - lastPush >= SA.cd) { owed -= SA.J; v += SA.J; lastPush = t; p = 1; }
+    }
+    if (i % 2 === 0) rows.push([t, v, p, SA.vset, A0, effortA(v, SA.vset)]);
+  }
+  return rows;
+}
+$('#b-csvA').addEventListener('click', () => {
+  const rows = simA(30);
+  const tail = rows.slice(-600).reduce((a, r) => a + r[1], 0) / 600;
+  const csv = ['t_s,v_mps,push,vset_mps,a0_mps2,effort']
+    .concat(rows.map(r => r.map((x, i) => i === 2 ? x : f(x, i === 0 ? 3 : 4)).join(','))).join('\n');
+  download('tunnel-speed.csv', new Blob([csv], { type: 'text/csv' }));
+  toast('已导出 ' + rows.length + ' 行 · 末 10 s 均值 ' + f(tail, 3) + ' m/s');
+});
+// B
+range('r-bv', () => SB.v, v => SB.v = v, v => f(v, 1) + ' m/s');
+range('r-br', () => SB.R, v => SB.R = v, v => f(v, 1) + ' m');
+range('r-bg', () => SB.gain, v => SB.gain = v, v => f(v, 2));
+range('r-bl', () => SB.leanMax, v => SB.leanMax = v, v => f(v * DEG, 1) + '°');
+range('r-bc', () => SB.couple, v => SB.couple = v, v => f(v, 2));
+range('r-blag', () => SB.lag, v => SB.lag = v, v => f(v, 0) + ' ms');
+range('r-bgz', () => SB.gaze, v => SB.gaze = v, v => f(v, 2) + ' s');
+range('r-bcr', () => SB.crouch, v => SB.crouch = v, v => f(v, 2));
+range('r-bbob', () => SB.bob, v => SB.bob = v, v => f(v, 3) + ' m');
+range('r-bbf', () => SB.bobf, v => SB.bobf = v, v => f(v, 1) + ' Hz');
+toggle('t-geff', () => SB.geff, v => SB.geff = v);
+toggle('t-com', () => SB.com, v => SB.com = v);
+toggle('t-gaze', () => SB.gazeOn, v => SB.gazeOn = v);
+toggle('t-ghost', () => SB.ghost, v => SB.ghost = v);
+toggle('t-neck', () => SB.neck, v => SB.neck = v);
+$('#b-flip').addEventListener('click', () => { SB.dir *= -1; resetB(); toast(SB.dir > 0 ? '右弯' : '左弯'); });
+$('#cvRear').addEventListener('click', () => { SB.dir *= -1; resetB(); toast(SB.dir > 0 ? '右弯' : '左弯'); });
+$('#b-resetB').addEventListener('click', () => {
+  Object.assign(SB, { v: 8, R: 24.277, dir: 1, gain: 1, leanMax: 0.52, couple: 0.6, lag: 80, gaze: 0.35, crouch: 0.22, bob: 0.012, bobf: 2, geff: true, com: true, gazeOn: true, ghost: true, neck: true });
+  resetB(); syncAll(); toast('控制台 B 已重置');
+});
+$('#b-randB').addEventListener('click', () => {
+  const r = Math.random;
+  SB.v = +(3 + r() * 13).toFixed(1); SB.R = +(14 + r() * 90).toFixed(1); SB.dir = r() < 0.5 ? -1 : 1;
+  SB.gain = +(0.6 + r() * 1.2).toFixed(2); SB.leanMax = +(0.3 + r() * 0.5).toFixed(2);
+  SB.couple = +(r()).toFixed(2); SB.lag = Math.round(r() * 200); SB.gaze = +(r() * 0.7).toFixed(2);
+  resetB(); syncAll(); toast('随机工况 · v ' + f(SB.v, 1) + ' / R ' + f(SB.R, 1));
+});
+$('#b-pngB').addEventListener('click', () => {
+  const a = $('#cvRear'), b = $('#cvTop');
+  const out = document.createElement('canvas'); out.width = a.width; out.height = a.height + b.height;
+  const c = out.getContext('2d'); c.fillStyle = '#080a0c'; c.fillRect(0, 0, out.width, out.height);
+  c.drawImage(a, 0, 0); c.drawImage(b, 0, a.height);
+  out.toBlob(bl => { download('tunnel-lean-head.png', bl); toast('已导出后视 + 俯视'); }, 'image/png');
+});
+// C
+range('r-seed', () => SC.seed, v => { SC.seed = Math.round(v); pickLoop(SC.seed, true); }, v => v + '');
+range('r-len', () => SC.targetL, v => { SC.targetL = v; pickLoop(SC.seed, true); }, v => f(v, 0) + ' m');
+range('r-h2', () => SC.h2, v => { SC.h2 = v; pickLoop(SC.seed, true); }, v => f(v, 2));
+range('r-h3', () => SC.h3, v => { SC.h3 = v; pickLoop(SC.seed, true); }, v => f(v, 2));
+range('r-h4', () => SC.h4, v => { SC.h4 = v; pickLoop(SC.seed, true); }, v => f(v, 2));
+range('r-va', () => SC.va, v => { SC.va = v; pickLoop(SC.seed, true); }, v => f(v, 2));
+range('r-cv', () => SC.v, v => SC.v = v, v => f(v, 1) + ' m/s');
+toggle('t-curv', () => SC.curv, v => SC.curv = v);
+toggle('t-sep', () => SC.sepOn, v => SC.sepOn = v);
+toggle('t-rider', () => SC.rider, v => SC.rider = v);
+toggle('t-grid', () => SC.grid, v => SC.grid = v);
+toggle('t-label', () => SC.label, v => SC.label = v);
+$('#b-reseed').addEventListener('click', () => {
+  const s = 1 + Math.floor(Math.random() * 99999); SC.seed = s;
+  const m = pickLoop(s, true); syncAll();
+  toast('种子 ' + s + ' · ' + SC.tries + ' 次' + (loopOK(m) ? '命中' : '未过闸') + ' · minR ' + f(m.minR, 1));
+});
+$('#b-resetC').addEventListener('click', () => {
+  Object.assign(SC, { seed: 137, targetL: 295, h2: 1, h3: 1, h4: 1, va: 1, v: 8, curv: true, sepOn: true, rider: true, grid: true, label: true });
+  pickLoop(137, true); SC.s = 0; syncAll(); toast('控制台 C 已重置 · 种子 137');
+});
+$('#b-randC').addEventListener('click', () => {
+  const r = Math.random;
+  SC.h2 = +(0.6 + r() * 0.9).toFixed(2); SC.h3 = +(0.6 + r() * 0.9).toFixed(2);
+  SC.h4 = +(r() * 2).toFixed(2); SC.va = +(0.3 + r() * 1.5).toFixed(2);
+  SC.targetL = Math.round(250 + r() * 100); SC.seed = 1 + Math.floor(r() * 99999);
+  pickLoop(SC.seed, true); syncAll(); toast('随机族 · 种子 ' + SC.seed);
+});
+$('#b-svgC').addEventListener('click', () => { download('tunnel-route-seed' + SC.seed + '.svg', new Blob([routeSVG()], { type: 'image/svg+xml' })); toast('已导出 SVG（当前状态）'); });
+$('#b-pngC').addEventListener('click', () => pngOf($('#cvRoute'), 'tunnel-route-seed' + SC.seed + '.png'));
+// D
+$$('#d-seg button').forEach(b => b.addEventListener('click', () => {
+  SD.mile = parseInt(b.dataset.m, 10);
+  $$('#d-seg button').forEach(x => x.classList.toggle('on', x === b));
+  $$('.mcard').forEach(x => x.classList.toggle('on', parseInt(x.dataset.m, 10) === SD.mile));
+  toast(['M1 骨架与侧倾', 'M2 腿与蹬地 IK', 'M3 臂与头部链', 'M4 次级运动与 LOD'][SD.mile - 1] + '（示意，未实装）');
+}));
+$$('.mcard').forEach(c => c.addEventListener('click', () => {
+  const m = parseInt(c.dataset.m, 10);
+  const b = $('#d-seg button[data-m="' + m + '"]'); if (b) b.click();
+  $('#cvRig').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}));
+range('r-dlean', () => SD.lean, v => SD.lean = v, v => f(v, 1) + '°');
+range('r-dcrouch', () => SD.crouch, v => SD.crouch = v, v => f(v, 2));
+range('r-dcouple', () => SD.couple, v => SD.couple = v, v => f(v, 2));
+range('r-dpush', () => SD.pushSpeed, v => SD.pushSpeed = v, v => f(v, 2) + ' ×');
+range('r-dw', () => SD.bw, v => SD.bw = v, v => f(v, 2) + ' ×');
+range('r-drim', () => SD.rim, v => SD.rim = v, v => f(v, 2));
+range('r-dzoom', () => SD.zoom, v => SD.zoom = v, v => f(v, 2) + ' ×');
+toggle('t-dlabel', () => SD.label, v => SD.label = v);
+toggle('t-dik', () => SD.ik, v => SD.ik = v);
+toggle('t-dcom', () => SD.com, v => SD.com = v);
+toggle('t-dplay', () => SD.play, v => SD.play = v);
+$('#b-dstep').addEventListener('click', () => { SD.phase = (SD.phase + 0.05) % 1; if (SD.mile < 2) { SD.mile = 2; $('#d-seg button[data-m="2"]').click(); } toast('蹬地相位 ' + f(SD.phase, 2)); });
+$('#b-resetD').addEventListener('click', () => {
+  Object.assign(SD, { mile: 1, lean: 15, crouch: 0.22, couple: 0.6, pushSpeed: 1, bw: 1, rim: 0.85, zoom: 1, label: true, ik: true, com: true, play: true, phase: 0 });
+  $('#d-seg button[data-m="1"]').click(); syncAll(); toast('控制台 D 已重置');
+});
+$('#b-randD').addEventListener('click', () => {
+  const r = Math.random;
+  SD.lean = +((r() - 0.5) * 56).toFixed(1); SD.crouch = +(r() * 0.45).toFixed(2);
+  SD.couple = +r().toFixed(2); SD.pushSpeed = +(0.3 + r() * 2).toFixed(2);
+  SD.bw = +(0.5 + r() * 1.6).toFixed(2); SD.rim = +(r() * 1.4).toFixed(2);
+  syncAll(); toast('随机姿态');
+});
+$('#b-pngD').addEventListener('click', () => pngOf($('#cvRig'), 'tunnel-rig-M' + SD.mile + '.png'));
+
+/* =====================================================================
+   导航 · 揭示 · 主循环
+   ===================================================================== */
+const navLinks = $$('#nav a');
+const navSecs = $$('main section');
+/* 当前节用滚动位置直接判定：IntersectionObserver 在反向滚动时会把上一节
+   重新判为相交，批次内顺序不定，导致高亮滞后一节。 */
+function paintNav() {
+  const y = window.scrollY + 80;
+  let cur = null;
+  for (const s of navSecs) if (s.getBoundingClientRect().top + window.scrollY <= y) cur = s;
+  navLinks.forEach(a => a.classList.toggle('on', !!cur && a.getAttribute('href') === '#' + cur.id));
+}
+let navTick = false, navWatch = 0;
+window.addEventListener('scroll', () => {
+  if (navTick) return; navTick = true;
+  requestAnimationFrame(() => { navTick = false; paintNav(); });
+}, { passive: true });
+window.addEventListener('resize', paintNav);
+/* 原生锚点 + smooth 在这张长页上会中途停住（实测 rig→art 在 8500 处停滞 >200 ms，
+   目标 8951）。改成自己算目标 + 停稳即校正的看门狗，落点与滚动方向无关。 */
+const NAV_OFF = 74;
+const NAV_SMOOTH = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function jumpTo(id, smooth) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  /* behavior:'auto' 会沿用 CSS 的 scroll-behavior:smooth，校正必须写死 instant */
+  window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - NAV_OFF), behavior: smooth && NAV_SMOOTH ? 'smooth' : 'instant' });
+  cancelAnimationFrame(navWatch);
+  const t0 = performance.now();
+  let lastY = window.scrollY, still = 0;
+  const watch = () => {
+    const y = window.scrollY;
+    if (Math.abs(y - lastY) < 0.5) still++; else still = 0;
+    lastY = y;
+    const d = el.getBoundingClientRect().top - NAV_OFF;
+    const de = document.documentElement;
+    const atEnd = y >= de.scrollHeight - window.innerHeight - 1;
+    if (Math.abs(d) > 2 && !atEnd && (still >= 6 || performance.now() - t0 > 2200)) {
+      window.scrollTo({ top: y + d, behavior: 'instant' }); paintNav(); return;
+    }
+    if (performance.now() - t0 < 2400) navWatch = requestAnimationFrame(watch);
+    else paintNav();
+  };
+  navWatch = requestAnimationFrame(watch);
+}
+navLinks.forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  const id = a.getAttribute('href').slice(1);
+  history.replaceState(null, '', '#' + id);
+  jumpTo(id, true);
+}));
+$('.brand').addEventListener('click', e => { e.preventDefault(); history.replaceState(null, '', '#hero'); jumpTo('hero', true); });
+paintNav();
+if (location.hash.length > 1) setTimeout(() => jumpTo(location.hash.slice(1), false), 60);
+const revObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); } }), { threshold: 0.08 });
+$$('.reveal').forEach(el => revObs.observe(el));
+
+const LABS = [
+  { el: $('#speed'), step: dt => { const n = Math.min(12, Math.ceil(dt / (1 / 120))); const sdt = dt / n; for (let i = 0; i < n; i++) stepA(sdt); recordA(dt); }, draw: () => { drawSpeed(); drawForce(); readA(); } },
+  { el: $('#lean'), step: dt => stepB(dt), draw: () => { drawRear(); drawTop(); readB(); } },
+  { el: $('#route'), step: dt => { SC.s = wrapS(SC.s + SC.v * dt); }, draw: () => { drawRoute(); readC(); } },
+  { el: $('#rig'), step: () => { }, draw: dt => drawRig(dt) }
+];
+const visObs = new IntersectionObserver(es => es.forEach(e => {
+  const L = LABS.find(x => x.el === e.target); if (L) L.vis = e.isIntersecting;
+}), { threshold: 0.02 });
+LABS.forEach(L => { L.vis = false; visObs.observe(L.el); });
+
+pickLoop(137, true);
+resetA(); resetB();
+let last = performance.now(), acc = 0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  let dt = (now - last) / 1000; last = now;
+  if (dt > 0.1) dt = 0.1;
+  if (document.hidden) return;
+  drawAmbient(dt);
+  if (paintPending) { paintPending = false; for (const L of LABS) L.draw(0); }
+  for (const L of LABS) if (L.vis) { L.step(dt); L.draw(dt); }
+}
+requestAnimationFrame(loop);
+window.addEventListener('resize', () => { for (const L of LABS) if (L.vis) L.draw(0); });
+// 首屏立即画一次，避免 IntersectionObserver 尚未回调时留白
+setTimeout(() => { drawSpeed(); drawForce(); readA(); drawRear(); drawTop(); readB(); drawRoute(); readC(); drawRig(0); }, 60);
+window.__plan = { SA, SB, SC, SD, pickLoop, stepA, stepB, a0A, effortA, dragA, loopOK, GATE };
+</script>
+</body>
+</html>

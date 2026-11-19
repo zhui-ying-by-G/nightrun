@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宵行 · Nightrun — Lively 隧道动态壁纸</title>
+<meta name="description" content="宵行（Nightrun）：末世穿山隧道里踩滑板巡线的少年，无限循环的 Lively 动态壁纸。单击蹬地、双击压弯、鼠标横向侧移；完全离线、零网络请求。下载 zip 拖入 Lively 即装。">
+<meta property="og:title" content="宵行 · Nightrun">
+<meta property="og:description" content="夜里赶路的人。一条不会走完的隧道，一个不停下来的少年。Lively 动态壁纸。">
+<meta property="og:image" content="https://nightrun.fxdgrld.top/assets/hero.webp">
+<style>
+:root{
+  --ground:#0a0908; --ink:#e9e4d8; --ink-2:#c9c0ae; --muted:#9a9182;
+  --signal:#ffab4d; --rule:#2b261e; --panel:#141109;
+  --serif:"SimSun","Songti SC","NSimSun","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:17px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden}
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 62%}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,9,8,.38) 0%,rgba(10,9,8,0) 34%,rgba(10,9,8,.55) 66%,rgba(10,9,8,.94) 88%,var(--ground) 100%)}
+.hero-top{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;justify-content:space-between;align-items:baseline;padding:26px 34px}
+.wordmark{font-family:var(--serif);font-size:17px;letter-spacing:.3em;color:var(--ink)}
+.wordmark i{font-style:normal;letter-spacing:.34em;color:var(--ink-2);font-size:13px;margin-left:14px}
+.hero-top a{color:var(--ink-2);font-size:13.5px;text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:2px}
+.hero-top a:hover{color:var(--signal);border-color:var(--signal)}
+.quote{position:absolute;right:38px;top:46%;transform:translateY(-50%);z-index:2;writing-mode:vertical-rl;font-family:var(--serif);font-size:19px;letter-spacing:.32em;color:var(--ink-2);line-height:2}
+.quote cite{font-style:normal;font-size:13px;letter-spacing:.22em;color:var(--muted);margin-top:16px}
+.quote .lamp{display:inline-block;width:8px;height:8px;margin-top:18px;border-radius:50%;background:var(--signal);box-shadow:0 0 18px 5px rgba(255,171,77,.5);animation:breathe 4.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.55;box-shadow:0 0 10px 3px rgba(255,171,77,.35)}50%{opacity:1;box-shadow:0 0 22px 7px rgba(255,171,77,.6)}}
+.hero-inner{position:relative;z-index:2;width:min(1160px,100%);margin:0 auto;padding:0 34px 60px}
+h1{margin:0;font-family:var(--serif);font-weight:700;font-size:clamp(76px,12vw,152px);line-height:.98;letter-spacing:.08em}
+.tagline{margin:20px 0 0;font-size:clamp(18px,2.3vw,25px);letter-spacing:.14em;color:var(--ink-2)}
+.cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:36px}
+.btn{display:inline-block;padding:14px 28px;border-radius:2px;font-size:16px;letter-spacing:.06em;text-decoration:none}
+.btn-solid{background:var(--signal);color:#181006;font-weight:700}
+.btn-solid:hover{filter:brightness(1.09)}
+.btn-line{border:1px solid #4a4234;color:var(--ink)}
+.btn-line:hover{border-color:var(--signal);color:var(--signal)}
+.cta-note{margin:16px 0 0;font-size:13.5px;color:var(--muted);letter-spacing:.04em}
+main{max-width:690px;margin:0 auto;padding:76px 24px 8px}
+section{margin-bottom:66px}
+h2{margin:0 0 22px;font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:.1em}
+p{margin:0 0 16px;line-height:1.95;font-size:17px;color:var(--ink-2)}
+p strong{color:var(--ink)}
+hr.centerline{border:0;border-top:3px dashed #332c21;margin:0 0 66px}
+dl.data{display:grid;grid-template-columns:repeat(4,1fr);margin:30px 0 0;border:1px solid var(--rule)}
+dl.data>div{padding:16px 16px 14px;border-left:1px solid var(--rule)}
+dl.data>div:first-child{border-left:0}
+dl.data dt{font-size:12.5px;letter-spacing:.14em;color:var(--muted)}
+dl.data dd{margin:8px 0 0;font-family:var(--serif);font-size:26px;color:var(--ink)}
+dl.data dd small{font-size:13px;color:var(--muted);font-family:var(--sans);margin-left:4px}
+figure.scene{margin:34px 0 0}
+figure.scene img{display:block;width:100%;border:1px solid var(--rule)}
+figcaption{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.8}
+table.ctrl{width:100%;border-collapse:collapse;font-size:15.5px;margin-top:6px}
+table.ctrl th,table.ctrl td{border:1px solid var(--rule);padding:12px 14px;text-align:left;vertical-align:top}
+table.ctrl th{background:var(--panel);color:var(--ink);font-weight:700;white-space:nowrap;width:112px}
+table.ctrl td{color:var(--ink-2);line-height:1.85}
+ol.steps{list-style:none;counter-reset:st;margin:26px 0 0;padding:0}
+ol.steps li{counter-increment:st;position:relative;padding:0 0 28px 92px}
+ol.steps li::before{content:"K0+" counter(st) "00";position:absolute;left:0;top:1px;font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--signal);background:var(--panel);border:1px solid #4a4234;border-radius:2px;padding:4px 8px;letter-spacing:.06em}
+ol.steps li p{margin:0}
+.note{font-size:14px;color:var(--muted);line-height:1.9}
+ul.docs{list-style:none;margin:22px 0 0;padding:0}
+ul.docs li{border-top:1px solid var(--rule)}
+ul.docs li:last-child{border-bottom:1px solid var(--rule)}
+ul.docs a{display:flex;justify-content:space-between;gap:18px;align-items:baseline;padding:15px 2px;color:var(--ink);text-decoration:none;font-size:16px}
+ul.docs a:hover{color:var(--signal)}
+ul.docs .desc{color:var(--muted);font-size:13.5px;text-align:right}
+footer{border-top:1px solid var(--rule);margin-top:10px;padding:38px 24px 64px}
+.foot-inner{max-width:690px;margin:0 auto;font-size:13.5px;color:var(--muted);line-height:2.05}
+.foot-inner a{color:var(--ink-2)}
+.foot-inner a:hover{color:var(--signal)}
+@media (max-width:720px){
+  .quote{position:static;transform:none;writing-mode:horizontal-tb;margin:0 0 22px;font-size:15px;line-height:1.9}
+  .quote cite{margin-top:0;margin-left:12px}
+  .quote .lamp{margin:0 0 0 12px;vertical-align:middle}
+  .hero{min-height:88svh}
+  .hero-inner{padding:0 22px 44px}
+  .hero-top{padding:20px 22px}
+  dl.data{grid-template-columns:1fr 1fr}
+  dl.data>div:nth-child(3){border-left:0}
+  dl.data>div:nth-child(n+3){border-top:1px solid var(--rule)}
+  ol.steps li{padding-left:0;padding-top:34px}
+  ul.docs a{flex-direction:column;gap:4px}
+  ul.docs .desc{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .quote .lamp{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img class="hero-img" src="assets/hero.webp" alt="末世隧道实景：钠灯沿拱壁向尽头的光收敛，少年踩滑板巡线，左侧墙上挂着紧急出口绿牌">
+  <div class="hero-top">
+    <span class="wordmark">宵行<i>Nightrun</i></span>
+    <a href="https://fxdgrld.top">fxdgrld.top 主站</a>
+  </div>
+  <p class="quote">肃肃宵征，夙夜在公。<cite>诗经 · 召南 · 小星</cite><span class="lamp" aria-hidden="true"></span></p>
+  <div class="hero-inner">
+    <h1>宵行</h1>
+    <p class="tagline">夜里赶路的人。</p>
+    <div class="cta">
+      <a class="btn btn-solid" href="https://github.com/zhui-ying-by-G/nightrun/releases/latest/download/nightrun-lively.zip">下载壁纸 · 461 KB</a>
+      <a class="btn btn-line" href="lab/">在线试玩</a>
+    </div>
+    <p class="cta-note">Lively Wallpaper 动态壁纸 · Windows · 拖入即装 · 完全离线</p>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>一条不会走完的隧道</h2>
+    <p>灾变之后，一条荒废高速的穿山隧道。少年踩滑板巡线，<strong>无限循环</strong>——不是视频，是在你桌面上实时渲染的场景：路线由种子随机生成（星形极坐标闭合环，保证有左转也有右转），死灯成段熄灭，海报风化撕裂，弃车堆在检修道，暗处的蝙蝠受惊起飞。</p>
+    <p>少年是<strong>程序化人物</strong>：21 骨刚性蒙皮，蹬地、压弯、呼吸、颈巾拖尾每帧求解，始终只占 1 次 draw call。Three.js 实景渲染，全部资产随包，<strong>零网络请求</strong>。</p>
+    <dl class="data">
+      <div><dt>实测帧率</dt><dd>56<small>fps @2560×1600</small></dd></div>
+      <div><dt>人物 draw call</dt><dd>1<small>次 / 帧</small></dd></div>
+      <div><dt>场景三角面</dt><dd>143.7<small>k</small></dd></div>
+      <div><dt>网络请求</dt><dd>0<small>条</small></dd></div>
+    </dl>
+    <figure class="scene">
+      <img src="assets/scene.webp" alt="隧道弯道：少年踩滑板掠过检修道上的锈色弃车，右墙出口指示牌写着出口 300 m">
+      <figcaption>实景帧 · 种子 137。检修道上的弃车为第三方开源跑车建模（12k 面实例化，1 draw call）；出口牌与喷涂是程序化生成的幸存者痕迹。</figcaption>
+    </figure>
+  </section>
+
+  <hr class="centerline">
+
+  <section>
+    <h2>桌面是它的路面</h2>
+    <p>壁纸不是隔着玻璃看的。Lively 的鼠标默认就打在壁纸上，三条输入通道各自独立：</p>
+    <table class="ctrl">
+      <tr><th>单击桌面</th><td>蹬地一脚 +1.15 m/s。速度是负反馈的：不点时平稳回落设定速度，不会越蹬越飞。</td></tr>
+      <tr><th>双击桌面</th><td>压弯脉冲——少年把板压进弯道，颈巾拖尾跟着甩。</td></tr>
+      <tr><th>横向移动鼠标</th><td>车道内侧移 + 侧倾，独立通道，不碰速度物理。鼠标静止 4 秒后回落成慢速巡游摆。</td></tr>
+    </table>
+    <p class="note" style="margin-top:16px">需要键盘焦点时，在 Lively 设置里关掉「桌面交互」即完全不响应点击。微事件层每 2–7 分钟一出：对向车灯掠过、死灯回路短暂复活、一阵风吹起灰尘与颈巾。</p>
+  </section>
+
+  <hr class="centerline">
+
+  <section>
+    <h2>装上它</h2>
+    <ol class="steps">
+      <li><p><strong>下载 nightrun-lively.zip</strong>（本页顶部按钮，GitHub Release 附件，约 461 KB）。</p></li>
+      <li><p><strong>把 zip 拖进 Lively 库</strong>。web 工程不能由命令行导入，拖一次即可；之后调参、截图都可以走 CLI。</p></li>
+      <li><p><strong>更新后按「恢复默认」</strong>。存档在 SaveData 里按目录指针保存，改默认值不会覆盖旧存档——不按这一步，新参数不生效。</p></li>
+    </ol>
+    <p class="note">解压后的文件夹别放 Downloads 等临时位置：Lively 存的是指针，移动或改名会丢 origin 与存档。需要 WebGL2；不可用时回落 2D 近似，不会是一块黑矩形。无音频。帧率为 RTX 4060 Laptop 实测，核显请在设置里降画质档。</p>
+  </section>
+
+  <hr class="centerline">
+
+  <section>
+    <h2>工程与设定</h2>
+    <p>这个仓库同时是工程档案：世界观、蓝图与人物方案都在里面，工作台可以实时调参并导出你自己的 zip。</p>
+    <ul class="docs">
+      <li><a href="docs/world-bible.md"><span>世界观设定</span><span class="desc">灾变后的隧道世界 · markdown</span></a></li>
+      <li><a href="docs/blueprint.html"><span>工程蓝图 v1.1</span><span class="desc">断面 / 路线闸门 / 性能预算</span></a></li>
+      <li><a href="docs/character.html"><span>人物建模方案 v2</span><span class="desc">21 骨刚性蒙皮与每帧求解</span></a></li>
+      <li><a href="lab/"><span>实景工作台</span><span class="desc">在线调参 · 页内导出 zip</span></a></li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-inner">
+    宵行 · Nightrun —— 名字出自《诗经·召南·小星》「肃肃宵征，夙夜在公」。<br>
+    许可 <a href="LICENSE">CC-BY-NC-4.0</a>：署名、非商业性使用。跑车道具为第三方开源建模，出处与许可由作者另行声明，不在本许可授权范围内。<br>
+    (c) 2026 FX · <a href="https://fxdgrld.top">fxdgrld.top</a> · <a href="https://github.com/zhui-ying-by-G/nightrun">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
